@@ -1,0 +1,1 @@
+g++ c7_final.cc -lGLEW -lGL -lsfml-window -lsfml-system
