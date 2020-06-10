@@ -21,5 +21,5 @@ target_include_directories(mycommon
   $<INSTALL_INTERFACE:include>
   )
 
-set(LIB_PUBLIC_HEADERS mycommon.hh)
-set_target_properties(mycommon PROPERTIES PUBLIC_HEADER "${LIB_PUBLIC_HEADERS}")
+# set(LIB_PUBLIC_HEADERS mycommon.hh)
+# set_target_properties(mycommon PROPERTIES PUBLIC_HEADER "${LIB_PUBLIC_HEADERS}")

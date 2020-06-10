@@ -12,8 +12,7 @@ include(common/mysystem.cmake)
 add_subdirectory(common)
 
 add_subdirectory(telescope)
-#add_subdirectory(aidatlu)
 
 #add_subdirectory(eudaq)
 #add_subdirectory(web)
-add_subdirectory(gl)
+# add_subdirectory(gl)
