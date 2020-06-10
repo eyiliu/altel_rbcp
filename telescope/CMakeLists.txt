@@ -19,10 +19,13 @@ target_link_libraries(mytest PRIVATE mycommon telescope)
 add_executable(mytele exe/telescope_main.cc)
 target_link_libraries(mytele PRIVATE mycommon telescope)
 
-install(TARGETS telescope mytest mytele
+add_executable(myrbcp exe/rbcp_main.cc)
+target_link_libraries(myrbcp PRIVATE mycommon telescope)
+
+install(TARGETS telescope mytest mytele myrbcp
   EXPORT ${PROJECT_NAME}Targets
   RUNTIME       DESTINATION bin      COMPONENT runtime
-  LIBRARY       DESTINATION lib      COMPONENT runtime  NAMELINK_COMPONENT devel
+  LIBRARY       DESTINATION lib      COMPONENT runtime
   ARCHIVE       DESTINATION lib      COMPONENT devel
   PUBLIC_HEADER DESTINATION include  COMPONENT devel
   RESOURCE      DESTINATION resource COMPONENT runtime
