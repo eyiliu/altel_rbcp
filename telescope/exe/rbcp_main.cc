@@ -13,18 +13,50 @@
 #include "linenoise.h"
 
 
-int main(int argc, char **argv){
-  const std::string help_usage("\n\
-Usage:\n\
--c json_file: path to json file\n\
+static  const std::string help_usage
+(R"(
+Usage:
+-c json_file: path to json file
 -i ip_address: eg. 131.169.133.170 for alpide_0 \n\
--h : print usage information, and then quit\n\
-");
+-h : print usage information, and then quit
+)"
+ );
+
+
+static  const std::string help_usage_linenoise
+(R"(
+
+keyword: help, info, quit, sensor, firmware, set, get
+
+example: 
+  1) get firmware regiester
+   > firmware get FW_REG_NAME
+
+  2) set firmware regiester
+   > firmware set FW_REG_NAME 10
+
+  3) get sensor regiester
+   > sensor get SN_REG_NAME
+
+  4) set sensor regiester
+   > sensor set SN_REG_NAME 10
+
+  5) exit/quit command line
+   > quit
+
+  6) get ip address (base) from firmware regiesters
+   > info
+
+)"
+ );
+
+
+int main(int argc, char **argv){
   
   std::string c_opt;
   std::string i_opt;
   int c;
-  while ( (c = getopt(argc, argv, "c:w:h")) != -1) {
+  while ( (c = getopt(argc, argv, "c:i:h")) != -1) {
     switch (c) {
     case 'c':
       c_opt = optarg;
@@ -93,6 +125,28 @@ Usage:\n\
       free(result);
       break;
     }
+    else if ( std::regex_match(result, std::regex("\\s*(help)\\s*")) ){
+      fprintf(stdout, "%s", help_usage_linenoise.c_str());
+      linenoiseHistoryAdd(result);
+      free(result);
+      break;
+    }
+
+    else if ( std::regex_match(result, std::regex("\\s*(sensor)\\s+(set)\\s+(\\w+)\\s+(?:(0[Xx])?([0-9]+))\\s*")) ){
+      std::cmatch mt;
+      std::regex_match(result, mt, std::regex("\\s*(sensor)\\s+(set)\\s+(\\w+)\\s+(?:(0[Xx])?([0-9]+))\\s*"));
+      std::string name = mt[3].str();
+      uint64_t value = std::stoull(mt[5].str(), 0, mt[4].str().empty()?10:16);
+      fw.SetAlpideRegister(name, value);
+    }
+    else if ( std::regex_match(result, std::regex("\\s*(sensor)\\s+(get)\\s+(\\w+)\\s*")) ){
+      std::cmatch mt;
+      std::regex_match(result, mt, std::regex("\\s*(sensor)\\s+(get)\\s+(\\w+)\\s*"));
+      std::string name = mt[3].str();
+      uint64_t value = fw.GetAlpideRegister(name);
+      fprintf(stderr, "%s = %u, %#x\n", name.c_str(), value, value);
+    }
+    
     else if ( std::regex_match(result, std::regex("\\s*(firmware)\\s+(set)\\s+(\\w+)\\s+(?:(0[Xx])?([0-9]+))\\s*")) ){
       std::cmatch mt;
       std::regex_match(result, mt, std::regex("\\s*(firmware)\\s+(set)\\s+(\\w+)\\s+(?:(0[Xx])?([0-9]+))\\s*"));
