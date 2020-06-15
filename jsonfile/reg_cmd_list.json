@@ -1176,6 +1176,16 @@
 	    "write":true,
 	    "reset":"0x10",
 	    "description":"fixed ip address 3 (lowest byte). NOTE: the IP3_runtime = IP3 + SW_onboard"
+	},
+        {
+	    "name":"IP_READ_ONLY",
+	    "address":"0xFFFFFCFF",
+	    "bytes":1,
+	    "words":1,
+	    "read":false,
+	    "write":true,
+	    "reset":"0xff",
+	    "description":"readonly flag to protect IP address. Disable it before setting new IP address"
 	}
     ]
 }
