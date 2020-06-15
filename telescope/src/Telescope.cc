@@ -105,7 +105,7 @@ uint64_t Layer::AsyncPushBack(){ // IMPROVE IT AS A RING
 
   uint32_t tg_expected = 0;
   uint32_t flag_wait_first_event = true;
-
+  
   m_rd->Open();
   m_is_async_reading = true;
   while (m_is_async_reading){
@@ -129,6 +129,7 @@ uint64_t Layer::AsyncPushBack(){ // IMPROVE IT AS A RING
       flag_wait_first_event = false;
       m_extension = df->GetExtension() ;
       tg_expected = tg_l15;
+      m_st_n_tg_ev_begin = tg_expected-1;
     }
     if(tg_l15 != (tg_expected & 0x7fff)){
       // std::cout<<(tg_expected & 0x7fff)<< " " << tg_l15<<"\n";
@@ -166,9 +167,10 @@ uint64_t Layer::AsyncWatchDog(){
   m_tp_run_begin = std::chrono::system_clock::now();
   m_tp_old = m_tp_run_begin;
   m_is_async_watching = true;
+  
   while(m_is_async_watching){
     std::this_thread::sleep_for(1s);
-    
+    uint64_t st_n_tg_ev_begin = m_st_n_tg_ev_begin;
     uint64_t st_n_tg_ev_now = m_st_n_tg_ev_now;
     uint64_t st_n_ev_input_now = m_st_n_ev_input_now;
     //uint64_t st_n_ev_output_now = m_st_n_ev_output_now;
@@ -194,7 +196,7 @@ uint64_t Layer::AsyncWatchDog(){
     //double st_output_vs_input_accu = st_n_ev_input_now? st_ev_output_now / st_ev_input_now : 1;
     double st_bad_vs_input_accu = st_n_ev_input_now? 1.0 * st_n_ev_bad_now / st_n_ev_input_now : 0;
     double st_overflow_vs_input_accu = st_n_ev_input_now? 1.0 *  st_n_ev_overflow_now / st_n_ev_input_now : 0;
-    double st_input_vs_trigger_accu = st_n_tg_ev_now? 1.0 * st_n_ev_input_now / st_n_tg_ev_now : 1;
+    double st_input_vs_trigger_accu = st_n_ev_input_now? 1.0 * st_n_ev_input_now / (st_n_tg_ev_now - st_n_tg_ev_begin + 1) : 1;
     
     //double st_output_vs_input_period = st_ev_input_period? st_ev_output_period / st_ev_input_period : 1;
     double st_bad_vs_input_period = st_n_ev_input_period? 1.0 * st_n_ev_bad_period / st_n_ev_input_period : 0;
@@ -202,15 +204,15 @@ uint64_t Layer::AsyncWatchDog(){
     double st_input_vs_trigger_period = st_n_tg_ev_period? 1.0 *  st_n_ev_input_period / st_n_tg_ev_period : 1;
     
     // hz
-    double st_hz_tg_accu = st_n_tg_ev_now / sec_accu ;
+    double st_hz_tg_accu = (st_n_tg_ev_now - st_n_tg_ev_begin + 1) / sec_accu ;
     double st_hz_input_accu = st_n_ev_input_now / sec_accu ; 
 
     double st_hz_tg_period = st_n_tg_ev_period / sec_period ;
     double st_hz_input_period = st_n_ev_input_period / sec_period ;
 
     std::string st_string_new =
-      FirmwarePortal::FormatString("L<%u>: event(%d)/trigger(%d)=Ev/Tr(%.4f) dEv/dTr(%.4f) tr_accu(%.2f hz) ev_accu(%.2f hz) tr_period(%.2f hz) ev_period(%.2f hz)\n",
-                                   m_extension, st_n_ev_input_now, st_n_tg_ev_now, st_input_vs_trigger_accu, st_input_vs_trigger_period,
+      FirmwarePortal::FormatString("L<%u>: event(%d)/trigger(%d - %d)=Ev/Tr(%.4f) dEv/dTr(%.4f) tr_accu(%.2f hz) ev_accu(%.2f hz) tr_period(%.2f hz) ev_period(%.2f hz)\n",
+                                   m_extension, st_n_ev_input_now, st_n_tg_ev_now, st_n_tg_ev_begin-1, st_input_vs_trigger_accu, st_input_vs_trigger_period,
                                    st_hz_tg_accu, st_hz_input_accu, st_hz_tg_period, st_hz_input_period
                                    );
     

@@ -35,6 +35,7 @@ public:
   std::atomic_uint64_t m_st_n_ev_output_now{0};
   std::atomic_uint64_t m_st_n_ev_bad_now{0};
   std::atomic_uint64_t m_st_n_ev_overflow_now{0};
+  std::atomic_uint64_t m_st_n_tg_ev_begin{0};
 
   uint64_t m_st_n_tg_ev_old{0};
   uint64_t m_st_n_ev_input_old{0};
