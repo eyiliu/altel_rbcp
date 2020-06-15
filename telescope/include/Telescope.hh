@@ -16,7 +16,6 @@ public:
   std::unique_ptr<AltelReader> m_rd;
   std::future<uint64_t> m_fut_async_rd;
   std::future<uint64_t> m_fut_async_watch;
-  std::mutex m_mx_ev_to_wrt;
   std::vector<JadeDataFrameSP> m_vec_ring_ev;
   JadeDataFrameSP m_ring_end;
   
@@ -76,9 +75,14 @@ public:
   bool m_is_async_reading{false};
   bool m_is_async_watching{false};
   bool m_is_running{false};
+
+  std::vector<JadeDataFrameSP> m_ev_last;
+  std::vector<JadeDataFrameSP> m_ev_last_empty;
+  std::atomic_uint64_t m_mon_ev_read{0};
+  std::atomic_uint64_t m_mon_ev_write{0};
+  std::vector<JadeDataFrameSP> ReadEvent_Lastcopy();
   
   std::atomic_uint64_t m_st_n_ev{0};
-
   
   ~Telescope();
   Telescope(const std::string& file_context);

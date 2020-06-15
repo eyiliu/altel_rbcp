@@ -328,8 +328,25 @@ std::vector<JadeDataFrameSP> Telescope::ReadEvent(){
     std::vector<JadeDataFrameSP> empty;
     return empty;
   }
+
+  if(m_mon_ev_read == m_mon_ev_write){
+    m_ev_last=ev_sync;
+    m_mon_ev_write ++;
+  }
+  
   return ev_sync;
 }
+
+std::vector<JadeDataFrameSP> Telescope::ReadEvent_Lastcopy(){
+  if(m_mon_ev_write > m_mon_ev_read){
+    std::vector<JadeDataFrameSP> re_ev_last = m_ev_last;
+    m_mon_ev_read ++;
+    return re_ev_last;
+  }
+  else
+    return m_ev_last_empty;
+}
+
 
 void Telescope::Start(){
   for(auto & l: m_vec_layer){

@@ -201,7 +201,7 @@ void JadeDataFrame::Decode(uint32_t level){
           m_data_flat[x+m_n_x*y] |= (1<<l_frame_n);
           m_data_x.push_back(x);
           m_data_y.push_back(y);
-          m_data_d.push_back(l_frame_n);
+          m_data_d.push_back(m_extension);
 	  // std::cout<<"x:y:d "<<x<<":"<<y<<":"<<(uint16_t)l_frame_n<<std::endl;
         }
         else{
@@ -226,7 +226,7 @@ void JadeDataFrame::Decode(uint32_t level){
         m_data_flat[x+m_n_x*y] |= (1<<l_frame_n);
         m_data_x.push_back(x);
         m_data_y.push_back(y);
-        m_data_d.push_back(l_frame_n);
+        m_data_d.push_back(m_extension);
 	// std::cout<<"x:y:d "<<x<<":"<<y<<":"<<(uint16_t)l_frame_n<<std::endl;
         for(int i=1; i<=7; i++){
           if(hit_map & (1<<(i-1))){
@@ -236,7 +236,7 @@ void JadeDataFrame::Decode(uint32_t level){
             m_data_flat[x+m_n_x*y] |= (1<<l_frame_n);
             m_data_x.push_back(x);
             m_data_y.push_back(y);
-            m_data_d.push_back(l_frame_n);
+            m_data_d.push_back(m_extension);
 	    // std::cout<<"x:y:d "<<x<<":"<<y<<":"<<(uint16_t)l_frame_n<<std::endl;
           }
         }

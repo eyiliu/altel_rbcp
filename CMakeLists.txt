@@ -15,4 +15,4 @@ add_subdirectory(telescope)
 
 #add_subdirectory(eudaq)
 #add_subdirectory(web)
-# add_subdirectory(gl)
+add_subdirectory(gl)
