@@ -11,17 +11,13 @@ target_include_directories(telgl
   $<INSTALL_INTERFACE:include>
   )
 
-# add_executable(mygl_test TelescopeGL_main.cxx)
-# target_link_libraries(mygl_test PRIVATE telgl)
-
-
-
+add_executable(mygl_reader TelescopeGL_main.cxx)
+target_link_libraries(mygl_reader PRIVATE telgl mycommon telescope)
 
 add_executable(mytel_gl telescope_main.cc)
 target_link_libraries(mytel_gl PRIVATE telgl mycommon telescope)
 
-
-install(TARGETS telgl mytel_gl
+install(TARGETS telgl mytel_gl mygl_reader
   EXPORT ${PROJECT_NAME}Targets
   RUNTIME       DESTINATION bin      COMPONENT runtime
   LIBRARY       DESTINATION lib      COMPONENT runtime

@@ -20,31 +20,35 @@ public:
 
   //const version
   const std::string& Raw() const;
-  const std::string& Meta() const;
 
   //none const version
   std::string& Raw();
-  std::string& Meta();
 
+  
+  uint64_t GetTrigger(){return m_trigger;};
+  void SetTrigger(uint64_t v){m_trigger = v;};
+  
   uint32_t GetMatrixDepth() const;
   uint32_t GetMatrixSizeX() const; //x row, y column
   uint32_t GetMatrixSizeY() const;
   uint64_t GetCounter();
   uint64_t GetExtension();
-
-  uint64_t GetTrigger(){return m_trigger;};
-  void SetTrigger(uint64_t v){m_trigger = v;};
   
-  
-  const std::string& Data_Flat() const {return m_data_flat; }
   const std::vector<uint16_t>& Data_X() const {return m_data_x; }
   const std::vector<uint16_t>& Data_Y() const {return m_data_y; }
   const std::vector<uint16_t>& Data_D() const {return m_data_d; }
-  const std::vector<uint32_t>& Data_T() const {return m_data_t; }
-  const std::vector<uint32_t>& Data_V() const {return m_data_v; }
   
   void Print(std::ostream& os, size_t ws = 0) const;
 
+  template <typename W>
+  void Deserialize(W& w) const {
+    
+
+  }
+
+
+
+  
   template <typename W>
   void Serialize(W& w) const {
     w.StartObject();
@@ -94,25 +98,18 @@ public:
   
 private:
   std::string m_data_raw;
-  std::string m_meta;
+  uint16_t m_level_decode{0};
+  uint64_t m_counter{0};
+  uint64_t m_extension{0};
+  uint64_t m_trigger{0};
   
-  uint16_t m_level_decode;  
-
-  uint64_t m_counter;
-  uint64_t m_extension;
-  uint64_t m_trigger;
-  
-  uint16_t m_n_x;
-  uint16_t m_n_y;
-  uint16_t m_n_d; //Z
-  std::string m_data_flat;
+  uint16_t m_n_x{0};
+  uint16_t m_n_y{1};
+  uint16_t m_n_d{1}; //Z
 
   std::vector<uint16_t> m_data_x;
   std::vector<uint16_t> m_data_y;
-  std::vector<uint16_t> m_data_d;
-  std::vector<uint32_t> m_data_t;
-  std::vector<uint32_t> m_data_v;
-  
+  std::vector<uint16_t> m_data_d;  
 };
 
 #endif

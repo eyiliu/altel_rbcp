@@ -1,5 +1,24 @@
-// #include "getopt.h"
+#include <chrono>
+#include <thread>
+#include <iostream>
+
+#include "Telescope.hh"
+
 #include "linenoise.h"
+
+#include <cstdio>
+#include <csignal>
+
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <memory>
+#include <chrono>
+#include <thread>
+#include <regex>
+
+#include <unistd.h>
+#include <getopt.h>
 
 #include <cstdio>
 #include <cstring>
@@ -13,6 +32,7 @@
 #include "Telescope.hh"
 #include "TelescopeGL.hh"
 #include <SFML/Window.hpp>
+#include "myrapidjson.h"
 
 
 void fw_threshold(FirmwarePortal *m_fw, uint32_t thrshold){

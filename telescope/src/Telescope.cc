@@ -424,7 +424,6 @@ uint64_t Telescope::AsyncRead(){
   rapidjson::Writer<rapidjson::StringBuffer> js_writer;
   
   uint64_t n_ev = 0;
-  
   m_is_async_reading = true;
   while (m_is_async_reading){
     auto ev = ReadEvent();
@@ -432,10 +431,17 @@ uint64_t Telescope::AsyncRead(){
       std::this_thread::sleep_for(100us);
       continue;
     }
+
     n_ev ++;
     m_st_n_ev ++;
     //continue;
     js_sb.Clear();
+    if(n_ev == 1){
+      std::fwrite(reinterpret_cast<const char *>("[\n"), 1, 2, fd);
+    }
+    else{
+      std::fwrite(reinterpret_cast<const char *>(",\n"), 1, 2, fd);
+    }
     js_writer.Reset(js_sb);
     js_writer.StartArray();
     for(auto& e: ev){
@@ -449,8 +455,7 @@ uint64_t Telescope::AsyncRead(){
     std::fwrite(reinterpret_cast<const char *>(p_ch), 1, n_ch, fd);
   }
   
-  
-  
+  std::fwrite(reinterpret_cast<const char *>("]"), 1, 2, fd);
   std::cout<< "aysnc exit, from Telescope::AsyncRead"<<std::endl;
   fclose(fd);
   return n_ev;
