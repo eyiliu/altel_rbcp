@@ -47,8 +47,8 @@ void Layer::fw_init(){
   m_fw->SetAlpideRegister("ITHR", 51);    //51  empty 0x32; 0x12 data, not full.  0x33 default, threshold
   // 3.8.1 Configuration of in-pixel logic
   m_fw->SendAlpideBroadcast("PRST");  //pixel matrix reset
-  m_fw->BroadcastPixelRegister("MASK_EN", 0);
-  m_fw->BroadcastPixelRegister("PULSE_EN", 0);
+  m_fw->SetPixelRegisterFullChip("MASK_EN", 0);
+  m_fw->SetPixelRegisterFullChip("PULSE_EN", 0);
   m_fw->SendAlpideBroadcast("PRST");  //pixel matrix reset
   // 3.8.2 Configuration and start-up of the Data Transmission Unit, PLL
   m_fw->SetAlpideRegister("DTU_CONF", 0x008d); // default

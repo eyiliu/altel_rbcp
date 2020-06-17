@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <getopt.h>
 
-
 #include "TelescopeGL.hh"
 #include <SFML/Window.hpp>
 
@@ -25,14 +24,36 @@
 #include "linenoise.h"
 #include "myrapidjson.h"
 
+struct Position{
+  uint16_t x;
+  uint16_t y;
+  uint16_t z;
 
+};
+
+struct Cluster{
+  uint16_t x;
+  uint16_t y;
+  uint16_t z;
+  std::vector<Position> pos_col;
+};
+
+class ClusterPool{
+  void addHit(){
+    
+  }
+
+  std::vector<Position> pos_col;
+  std::vector<Cluster>  clu_col;
+};
+
+  
 static const std::string help_usage = R"(
 Usage:
   -help              help message
   -verbose           verbose flag
   -file [jsonfile]   path to data json file
 )";
-
 
 
 int main(int argc, char **argv){
@@ -133,12 +154,17 @@ int main(int argc, char **argv){
           break;
         }
         telgl.clearHit();
+        
+        
         for (auto& subev : ev_it->GetArray()){
           for (auto& hit : subev["hit_xyz_array"].GetArray()){
             telgl.addHit(hit[0].GetInt(), hit[1].GetInt(), hit[2].GetInt());
+            
+            
+            
           }
         }
-        std::cout<< "flush new frame"<<std::endl;
+        
         telgl.clearFrame();
         telgl.drawTel();
         telgl.drawHit();

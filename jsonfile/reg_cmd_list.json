@@ -489,6 +489,17 @@
 	    "reset":"0x0000",
 	    "description":"All columns and rows are selected, need to toggle"
 	},
+        {
+	    "name":"TODO_MASK_PULSE_TOGGLE",
+	    "address":"0x0497",
+	    "bytes":2,
+	    "words":1,
+	    "read":false,
+	    "write":true,
+	    "reset":"0x0000",
+	    "description":"All columns and rows are selected, it is toggle, but not work"
+	},
+
 	{
 	    "name":"PIX_CONF_GLOBAL",
 	    "address":"0x0500",

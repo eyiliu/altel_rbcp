@@ -452,7 +452,7 @@ uint64_t FirmwarePortal::GetAlpideRegister(const std::string& name){
       SetFirmwareRegister("ADDR_CHIP_REG", address);
       uint64_t nr_old = GetFirmwareRegister("COUNT_READ");
       SendFirmwareCommand("READ");
-      std::chrono::system_clock::time_point  tp_timeout = std::chrono::system_clock::now() +  std::chrono::milliseconds(100);
+      std::chrono::system_clock::time_point  tp_timeout = std::chrono::system_clock::now() +  std::chrono::milliseconds(1000);
       bool flag_enable_counter_check = true; //TODO: enable it for a real hardware;
       if(!flag_enable_counter_check){
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -579,6 +579,8 @@ void FirmwarePortal::SetRegionRegister(uint64_t region, const std::string& name,
     if(json_addr.IsString()){
       uint64_t address_region_local = (std::stoull(json_reg["address"].GetString(), 0, 16)) & 0x07ff;
       uint64_t address = (region << 11) + address_region_local;
+      FormatPrint(std::cout, "INFO<%s>: %u(%#x)    %u(%#x) )\n", __func__, address, address, address_region_local, address_region_local);
+      
       SetFirmwareRegister("ADDR_CHIP_REG", address);
       SetFirmwareRegister("DATA_WRITE", value);
       SendFirmwareCommand("WRITE");
@@ -653,8 +655,7 @@ void FirmwarePortal::SetRegionRegister(uint64_t region, const std::string& name,
   if(!flag_found_reg){
     FormatPrint(std::cerr, "ERROR<%s>: unable to find register<%s> in array<%s>\n", __func__, name.c_str(), array_name.c_str());
     throw;
-  }
-  
+  }  
 }
 
 
@@ -773,15 +774,16 @@ void FirmwarePortal::SetPixelRegister(uint64_t x, uint64_t y, const std::string&
   
   BroadcastRegionRegister("REGION_COLUMN_SELECT", 0);
   BroadcastRegionRegister("REGION_ROW_SELECT", 0); //disable all selection lines
-  BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all change
+  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all change
   
   SetAlpideRegister("PIX_CONF_GLOBAL", conf_value);
   SetRegionRegister(column_line_region_number, "REGION_COLUMN_SELECT", column_line_number_local_pattern);
   SetRegionRegister(row_line_region_number, "REGION_ROW_SELECT", row_line_number_local_pattern);
-  BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all regional change (only selected)
+
+  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all regional change (only selected)
 }
 
-void FirmwarePortal::BroadcastPixelRegister(const std::string& name, uint64_t value){
+void FirmwarePortal::SetPixelRegisterFullChip(const std::string& name, uint64_t value){
   if(name!="MASK_EN" && name!="PULSE_EN"){
     FormatPrint(std::cerr, "ERROR<%s>: unable to find register<%s>. There are MASK_EN and PULSE_EN in pixel.\n", __func__, name.c_str());
     throw;
@@ -791,15 +793,203 @@ void FirmwarePortal::BroadcastPixelRegister(const std::string& name, uint64_t va
   uint64_t bit_ROWREGM_SEL = (name=="MASK_EN")?0x0001:0x0000;
   uint64_t conf_value = bit_ROWREGM_DATA | bit_ROWREGM_SEL;
 
-  BroadcastRegionRegister("REGION_COLUMN_SELECT", 0);
-  BroadcastRegionRegister("REGION_ROW_SELECT", 0); //disable all selection lines
-  BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all change
+  //not sure how to write pixel latch. toggle bit?
+  SetAlpideRegister("PIX_CONF_GLOBAL", 0);
+  SetAlpideRegister("TODO_MASK_PULSE", 0);
+  
+
+  // BroadcastRegionRegister("REGION_COLUMN_SELECT", 0);
+  // BroadcastRegionRegister("REGION_ROW_SELECT", 0); //disable all selection lines
+
+  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_L", 0); //toggle all change
+  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_H", 0);
+  // BroadcastRegionRegister("REGION_TOGGLE_ROW", 0);
+
   
   SetAlpideRegister("PIX_CONF_GLOBAL", conf_value);  
   BroadcastRegionRegister("REGION_COLUMN_SELECT", 0xffffffff);
   BroadcastRegionRegister("REGION_ROW_SELECT", 0xffff); //enable all selection lines
-  BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all change
+
+  SetAlpideRegister("TODO_MASK_PULSE", 0xffff);
+  SetAlpideRegister("TODO_MASK_PULSE_TOGGLE", 0xffff);
+
+  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_L", 0); //toggle all change
+  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_H", 0);
+  // BroadcastRegionRegister("REGION_TOGGLE_ROW", 0);
 }
+
+
+void FirmwarePortal::SetPixelRegisterFullColumn(uint64_t x, const std::string& name, uint64_t value){
+  if(name!="MASK_EN" && name!="PULSE_EN"){
+    FormatPrint(std::cerr, "ERROR<%s>: unable to find register<%s>. There are MASK_EN and PULSE_EN in pixel.\n", __func__, name.c_str());
+    throw;
+  }
+  
+  uint64_t bit_ROWREGM_DATA = value? 0x0002:0x0000;
+  uint64_t bit_ROWREGM_SEL = (name=="MASK_EN")?0x0001:0x0000; // mismatch between pALPIDE-3 and ALPIDE manual, using p3
+  uint64_t conf_value = bit_ROWREGM_DATA | bit_ROWREGM_SEL;
+
+  uint64_t column_line_region_number = x/32;
+  uint64_t column_line_number_local = x%32;
+  uint64_t column_line_number_local_pattern = 1ULL << column_line_number_local;
+  
+  BroadcastRegionRegister("REGION_COLUMN_SELECT", 0);
+  BroadcastRegionRegister("REGION_ROW_SELECT", 0); //disable all selection lines
+  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all change
+  
+  SetAlpideRegister("PIX_CONF_GLOBAL", conf_value);
+  SetRegionRegister(column_line_region_number, "REGION_COLUMN_SELECT", column_line_number_local_pattern);
+  BroadcastRegionRegister("REGION_ROW_SELECT", 0xffff); //enable all row selection lines
+
+  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all regional change (only selected)  
+}
+
+void FirmwarePortal::SetPixelRegisterFullRow(uint64_t y, const std::string& name, uint64_t value){
+  if(name!="MASK_EN" && name!="PULSE_EN"){
+    FormatPrint(std::cerr, "ERROR<%s>: unable to find register<%s>. There are MASK_EN and PULSE_EN in pixel.\n", __func__, name.c_str());
+    throw;
+  }
+  
+  uint64_t bit_ROWREGM_DATA = value? 0x0002:0x0000;
+  uint64_t bit_ROWREGM_SEL = (name=="MASK_EN")?0x0001:0x0000; // mismatch between pALPIDE-3 and ALPIDE manual, using p3
+  uint64_t conf_value = bit_ROWREGM_DATA | bit_ROWREGM_SEL;
+
+  uint64_t row_line_region_number = y/16;
+  uint64_t row_line_number_local = y%16;
+  uint64_t row_line_number_local_pattern = 1ULL << row_line_number_local;
+
+  
+  BroadcastRegionRegister("REGION_COLUMN_SELECT", 0);
+  BroadcastRegionRegister("REGION_ROW_SELECT", 0); //disable all selection lines
+  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all change
+  
+  SetAlpideRegister("PIX_CONF_GLOBAL", conf_value);
+  BroadcastRegionRegister("REGION_COLUMN_SELECT", 0xffffffff); //enable all column selection lines
+  SetRegionRegister(row_line_region_number, "REGION_ROW_SELECT", row_line_number_local_pattern);
+
+  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all regional change (only selected)
+}
+
+
+uint64_t FirmwarePortal::GetRegionRegister(uint64_t region, const std::string& name){  
+  DebugFormatPrint(std::cout, "INFO<%s>:  %s( name=%s )\n",__func__, __func__, name.c_str());
+  static const std::string array_name("CHIP_REG_LIST");
+  auto& json_array = m_json[array_name];
+  if(json_array.Empty()){
+    FormatPrint(std::cerr, "ERROR<%s>:   unable to find array<%s>\n", __func__, array_name.c_str());
+    throw;
+  }
+  uint64_t value;
+  bool flag_found_reg = false;
+  for(auto& json_reg: json_array.GetArray()){
+    if( json_reg["name"] != name )
+      continue;
+    auto& json_addr = json_reg["address"];
+    if(json_addr.IsString()){
+      uint64_t address_region_local = (std::stoull(json_reg["address"].GetString(), 0, 16)) & 0x07ff;
+      uint64_t address = (region << 11) + address_region_local;
+      FormatPrint(std::cout, "INFO<%s>: %u(%#x)    %u(%#x) )\n", __func__, address, address, address_region_local, address_region_local);
+
+      SetFirmwareRegister("ADDR_CHIP_REG", address);
+      uint64_t nr_old = GetFirmwareRegister("COUNT_READ");
+      SendFirmwareCommand("READ");
+      std::chrono::system_clock::time_point  tp_timeout = std::chrono::system_clock::now() +  std::chrono::milliseconds(1000);
+      bool flag_enable_counter_check = true; //TODO: enable it for a real hardware;
+      if(!flag_enable_counter_check){
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	FormatPrint(std::cout, "WARN<%s>: checking of the read count is disabled\n", __func__);
+      }
+      while(flag_enable_counter_check){
+	uint64_t nr_new = GetFirmwareRegister("COUNT_READ");
+	if(nr_new != nr_old){
+	  break;
+	}
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	if(std::chrono::system_clock::now() > tp_timeout){
+	  FormatPrint(std::cerr, "ERROR<%s>:  timeout to read back Alpide register<%s>\n", __func__, name.c_str());
+	  throw;
+	}
+      }
+      value = GetFirmwareRegister("DATA_READ");
+    }
+    else if(json_addr.IsArray()){
+      auto& json_bytes = json_reg["bytes"];
+      auto& json_words = json_reg["words"];
+      if(!json_bytes.IsUint64()){
+	FormatPrint(std::cerr, "ERROR<%s>:   bytes<%s> is not an int\n", __func__, Stringify(json_bytes).c_str());
+	throw;
+      }
+      if(!json_words.IsUint64()){
+	FormatPrint(std::cerr, "ERROR<%s>:   words<%s> is not an int\n", __func__, Stringify(json_words).c_str());
+	throw;
+      }
+      uint64_t n_bytes = json_bytes.GetUint64();
+      uint64_t n_words = json_words.GetUint64();
+      if((!n_bytes)||(!n_words)||(n_bytes%n_words)){
+	FormatPrint(std::cerr, "ERROR<%s>: incorrect bytes<%u> or words<%u>\n" , __func__, json_bytes.GetUint64(), json_words.GetUint64());
+	throw;
+      }
+      uint64_t n_bits_per_word = 8*n_bytes/n_words;
+
+      auto& json_endian = json_reg["endian"];
+      bool flag_is_little_endian;
+      if(json_endian=="LE"){
+	flag_is_little_endian = true;
+      }
+      else if(json_endian=="BE"){
+	flag_is_little_endian = false;
+      }
+      else{
+	FormatPrint(std::cerr, "ERROR<%s>: unknown endian<%s>\n", __func__, Stringify(json_endian).c_str());
+	throw;
+      }
+
+      if(n_words != json_addr.Size()){
+	FormatPrint(std::cerr, "ERROR<%s>: address<%s> array's size does not match the word number which is %u\n", __func__ , Stringify(json_addr).c_str(), n_words);
+	throw;
+      }
+      uint64_t i=0;
+      value = 0;
+      for(auto& name_in_array: json_addr.GetArray() ){
+	if(!name_in_array.IsString()){
+	  FormatPrint(std::cerr, "ERROR<%s>: name<%s> is not a string value\n", __func__, Stringify(name_in_array).c_str());
+	  throw;
+	}
+	std::string name_in_array_str = name_in_array.GetString();
+	uint64_t sub_value = GetRegionRegister(region, name_in_array_str);
+	uint64_t add_value;
+	if(flag_is_little_endian){
+	  uint64_t f = n_bits_per_word*i;
+	  uint64_t b = 0;
+	  add_value = (sub_value<<f)>>b;
+	  DebugFormatPrint(std::cout, "INFO<%s>:  %s sub_value=%#016x << %u  >>%u add_value=%#016x \n", __func__, "LE", sub_value, f, b, add_value);
+	}
+	else{
+	  uint64_t f = n_bits_per_word*(n_words-1-i);
+	  uint64_t b = 0;
+	  add_value = (sub_value<<f)>>b;
+	  DebugFormatPrint(std::cout, "INFO<%s>:  %s sub_value=%#016x << %u  >>%u add_value=%#016x \n", __func__, "BE", sub_value, f, b, add_value);
+	}
+	value += add_value;
+	i++;
+      }
+    }
+    else{
+      FormatPrint(std::cerr, "ERROR<%s>: unknown address format<%s>\n", __func__, Stringify(json_addr).c_str());
+      throw;
+    }
+    flag_found_reg = true;
+    break;
+  }
+  if(!flag_found_reg){
+    FormatPrint(std::cerr, "ERROR<%s>: unable to find register<%s> in array<%s>\n", __func__, name.c_str(), array_name.c_str());
+    throw;
+  }  
+  DebugFormatPrint(std::cout, "INFO<%s>: %s( name=%s ) return value=%#016x \n", __func__, __func__, name.c_str(), value);
+  return value;  
+}
+
+
 
 void FirmwarePortal::InjectPulse(){
   //SetAlpideRegister("FROMU_CONF_1", ); // APULSE/DPULSE

@@ -24,23 +24,27 @@ public:
   FirmwarePortal(const std::string &json_str_options);
 
   void SetFirmwareRegister(const std::string& name, uint64_t value);
-  void SetAlpideRegister(const std::string& name, uint64_t value);
-  void SetRegionRegister(uint64_t region, const std::string& name, uint64_t value);  
-  void SetPixelRegister(uint64_t x, uint64_t y, const std::string& name, uint64_t value); //page 70 manual 
-
-  void BroadcastRegionRegister(const std::string& name, uint64_t value);
-  void BroadcastPixelRegister(const std::string& name, uint64_t value);
-
-  
-  // uint64_t GetRegionRegister(uint64_t r, const std::string& name, uint64_t);
-  void InjectPulse();// test only, to be removed
-
-  
   void SendFirmwareCommand(const std::string& name);
+  uint64_t GetFirmwareRegister(const std::string& name);
+
+  void SetAlpideRegister(const std::string& name, uint64_t value);
   void SendAlpideCommand(const std::string& name);
   void SendAlpideBroadcast(const std::string& name);
-  uint64_t GetFirmwareRegister(const std::string& name);
   uint64_t GetAlpideRegister(const std::string& name);  
+
+  
+  void SetRegionRegister(uint64_t region, const std::string& name, uint64_t value);
+  void BroadcastRegionRegister(const std::string& name, uint64_t value);
+  uint64_t GetRegionRegister(uint64_t region, const std::string& name);
+
+  
+  void SetPixelRegister(uint64_t x, uint64_t y, const std::string& name, uint64_t value); //page 70 manual
+  void SetPixelRegisterFullColumn(uint64_t x, const std::string& name, uint64_t value);
+  void SetPixelRegisterFullRow(uint64_t y, const std::string& name, uint64_t value);
+  void SetPixelRegisterFullChip(const std::string& name, uint64_t value);
+  
+  void InjectPulse();// test only, to be removed
+  
 
   static std::string LoadFileToString(const std::string& path);
 

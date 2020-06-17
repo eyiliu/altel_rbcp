@@ -98,8 +98,9 @@ Usage:\n\
                                  {
                                    static const char* examples[] =
                                      {"help", "start", "stop", "init", "threshold", "window", "info",
-                                      "connect","quit", "sensor", "firmware", "set", "get", "region",
-                                      "broadcast", "pixel", "ture", "reset","false", "ITHR",
+                                      "connect","quit", "exit", "sensor", "firmware", "set", "get", "region",
+                                      "broadcast", "pixel", "true", "reset","false", "ITHR", "mask",
+                                      "x", "y",
                                       NULL};
                                    size_t i;
                                    for (i = 0;  examples[i] != NULL; ++i) {
@@ -115,7 +116,7 @@ Usage:\n\
     if (result == NULL) {
       break;
     }    
-    if ( std::regex_match(result, std::regex("\\s*(quit)\\s*")) ){
+    if ( std::regex_match(result, std::regex("\\s*(quit|exit)\\s*")) ){
       printf("quiting \n");
       linenoiseHistoryAdd(result);
       free(result);
@@ -129,7 +130,7 @@ Usage:\n\
       telgl.addTelLayer(0, 0, 0,   1, 0, 0, 0.028, 0.026, 1.0, 1024, 512);
       telgl.addTelLayer(0, 0, 30,  0, 1, 0, 0.028, 0.026, 1.0, 1024, 512);
       telgl.addTelLayer(0, 0, 60,  0, 0, 1, 0.028, 0.026, 1.0, 1024, 512);
-      telgl.addTelLayer(0, 0, 120, 1, 1, 0, 0.028, 0.026, 1.0, 1024, 512);
+      telgl.addTelLayer(0, 0, 120, 0.5, 0.5, 0, 0.028, 0.026, 1.0, 1024, 512);
       telgl.addTelLayer(0, 0, 150, 0, 1, 1, 0.028, 0.026, 1.0, 1024, 512);
       telgl.addTelLayer(0, 0, 180, 1, 0, 1, 0.028, 0.026, 1.0, 1024, 512);
       telgl.buildProgramTel();
@@ -188,7 +189,7 @@ Usage:\n\
       }
     }
     else if (std::regex_match(result, std::regex("\\s*(reset)\\s*"))){
-      printf("rest \n");
+      printf("reset \n");
       for(auto& l: tel.m_vec_layer){
         l->m_fw->SendFirmwareCommand("RESET");
       }
@@ -202,6 +203,43 @@ Usage:\n\
       for(auto& l: tel.m_vec_layer){
         auto &fw = l->m_fw;
         fw->SetAlpideRegister(name, value);
+      }
+    }
+    else if ( std::regex_match(result, std::regex("\\s*(region)\\s+(?:(0[Xx])?([0-9]+))\\s+(set)\\s+(\\w+)\\s+(?:(0[Xx])?([0-9]+))\\s*")) ){
+      std::cmatch mt;
+      std::regex_match(result, mt, std::regex("\\s*(region)\\s+(?:(0[Xx])?([0-9]+))\\s+(set)\\s+(\\w+)\\s+(?:(0[Xx])?([0-9]+))\\s*"));
+      
+      uint64_t region = std::stoull(mt[3].str(), 0, mt[2].str().empty()?10:16);      
+      std::string name = mt[5].str();
+      uint64_t value = std::stoull(mt[7].str(), 0, mt[6].str().empty()?10:16);
+      
+      for(auto& l: tel.m_vec_layer){
+        auto &fw = l->m_fw;
+        fw->SetRegionRegister(region, name, value);
+      }
+    }
+    else if ( std::regex_match(result, std::regex("\\s*(region)\\s+(set)\\s+(\\w+)\\s+(?:(0[Xx])?([0-9]+))\\s*")) ){
+      std::cmatch mt;
+      std::regex_match(result, mt, std::regex("\\s*(region)\\s+(set)\\s+(\\w+)\\s+(?:(0[Xx])?([0-9]+))\\s*"));
+      
+      std::string name = mt[3].str();
+      uint64_t value = std::stoull(mt[5].str(), 0, mt[4].str().empty()?10:16);
+      
+      for(auto& l: tel.m_vec_layer){
+        auto &fw = l->m_fw;
+        fw->BroadcastRegionRegister(name, value);
+      }
+    }
+    else if ( std::regex_match(result, std::regex("\\s*(region)\\s+(?:(0[Xx])?([0-9]+))\\s+(get)\\s+(\\w+)\\s*")) ){
+      std::cmatch mt;
+      std::regex_match(result, mt, std::regex("\\s*(region)\\s+(?:(0[Xx])?([0-9]+))\\s+(get)\\s+(\\w+)\\s*"));
+      
+      uint64_t region = std::stoull(mt[3].str(), 0, mt[2].str().empty()?10:16);      
+      std::string name = mt[5].str();
+      for(auto& l: tel.m_vec_layer){
+        auto &fw = l->m_fw;
+        uint64_t value = fw->GetRegionRegister(region, name);
+        fprintf(stderr, "%s @r%u  = %u, %#x\n", name.c_str(), region, value, value);
       }
     }
     else if ( std::regex_match(result, std::regex("\\s*(sensor)\\s+(get)\\s+(\\w+)\\s*")) ){
@@ -244,6 +282,24 @@ Usage:\n\
         auto &fw = l->m_fw;
         fw->SetPixelRegister(x, y, "MASK_EN", value);
       }
+    }
+    else if ( std::regex_match(result, std::regex("\\s*(test)\\s+(mask)\\s+(true|false)\\s*")) ){
+      std::cmatch mt;
+      std::regex_match(result, mt, std::regex("\\s*(test)\\s+(mask)\\s+(true|false)\\s*"));
+      bool value =  (mt[3].str()=="true")?true:false;
+      std::cout<< "mask " << value<<std::endl;
+
+      // for(int i=0; i<400; i++){
+      //   tel.m_vec_layer[0]->m_fw->SetPixelRegisterFullRow(i, "MASK_EN", value);
+      // }
+
+      // for(int i=0; i<400; i++){
+      //   tel.m_vec_layer[1]->m_fw->SetPixelRegisterFullRow(i, "PULSE_EN", value);
+      // }
+
+      tel.m_vec_layer[2]->m_fw->SetPixelRegisterFullChip("MASK_EN", 1);
+      tel.m_vec_layer[4]->m_fw->SetPixelRegisterFullChip("PULSE_EN", 1);
+      
     }
     else if( std::regex_match(result, std::regex("\\s*(threshold)\\s+(?:(0[Xx])?([0-9]+))\\s*")) ){
       std::cmatch mt;
