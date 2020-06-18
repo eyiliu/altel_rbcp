@@ -54,6 +54,12 @@ AltelReader::AltelReader(const std::string& json_str)
   }  
 }
 
+
+const std::string& AltelReader::DeviceUrl(){
+  return m_tcp_ip;
+}
+
+
 void AltelReader::Open(){
   if(m_flag_file){
     // std::string time_str= JadeUtils::GetNowStr("%y%m%d%H%M%S");
@@ -162,7 +168,7 @@ JadeDataFrameSP AltelReader::Read(const std::chrono::milliseconds &timeout_idel)
               if(m_file_terminate_eof)
                 return nullptr;
               else{
-                std::cerr<<"JadeRead: no data at all. ("<<m_tcp_ip <<")\n";
+                std::fprintf(stderr, " data reader: no data at all. (%s)\n", m_tcp_ip.c_str());
               }
               return nullptr;
             }
@@ -191,7 +197,7 @@ JadeDataFrameSP AltelReader::Read(const std::chrono::milliseconds &timeout_idel)
           if(std::chrono::system_clock::now() > tp_timeout_idel){
             //std::cerr<<"JadeRead: reading timeout\n";
             if(size_filled == 0){
-              std::cerr<<"JadeRead: no data at all. ("<<m_tcp_ip <<")\n";
+              std::fprintf(stderr, " data reader: no data at all. (%s)\n", m_tcp_ip.c_str());
               return nullptr;
             }
             std::cerr<<"JadeRead: remaining data\n";

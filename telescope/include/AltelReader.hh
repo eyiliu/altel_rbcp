@@ -19,6 +19,8 @@ public:
   void Open();
   void Close();
   static std::string LoadFileToString(const std::string& path);    
+
+  const std::string& DeviceUrl();
 private:
   int m_fd{0};
   std::string m_tcp_ip;

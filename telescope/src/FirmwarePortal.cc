@@ -47,6 +47,9 @@ FirmwarePortal::FirmwarePortal(const std::string &json_str){
 
 }
 
+const std::string& FirmwarePortal::DeviceUrl(){
+  return m_alpide_ip_addr;
+}
 
 
 void  FirmwarePortal::WriteByte(uint64_t address, uint64_t value){

@@ -10,12 +10,14 @@ void Layer::fw_start(){
   m_fw->SendAlpideBroadcast("RORST"); //Readout (RRU/TRU/DMU) reset, commit token
   m_fw->SetAlpideRegister("CHIP_MODE", 0x3d); //trigger MODE
   m_fw->SetFirmwareRegister("FIRMWARE_MODE", 1); //run ext trigger
+  std::fprintf(stdout, " fw start %s\n", m_fw->DeviceUrl().c_str());
 }
 
 void Layer::fw_stop(){
   if(!m_fw) return;
   m_fw->SetAlpideRegister("CHIP_MODE", 0x3c); // configure mode
   m_fw->SetFirmwareRegister("FIRMWARE_MODE", 0);
+  std::fprintf(stdout, " fw stop  %s\n", m_fw->DeviceUrl().c_str());
 }
 
 void Layer::fw_init(){
@@ -34,17 +36,19 @@ void Layer::fw_init(){
   m_fw->SetAlpideRegister("VRESETP", 0x75); //117
   m_fw->SetAlpideRegister("VRESETD", 0x93); //147
   m_fw->SetAlpideRegister("VCASP", 0x56);   //86
-  m_fw->SetAlpideRegister("VCASN", 0x32);   //57 Y50
+  uint32_t vcasn = 57;
+  uint32_t ithr  = 51;
+  m_fw->SetAlpideRegister("VCASN", vcasn);   //57 Y50
   m_fw->SetAlpideRegister("VPULSEH", 0xff); //255 
   m_fw->SetAlpideRegister("VPULSEL", 0x0);  //0
-  m_fw->SetAlpideRegister("VCASN2", 0x39);  //62 Y63
+  m_fw->SetAlpideRegister("VCASN2",vcasn+12);  //62 Y63  VCASN+12
   m_fw->SetAlpideRegister("VCLIP", 0x0);    //0
   m_fw->SetAlpideRegister("VTEMP", 0x0);
   m_fw->SetAlpideRegister("IAUX2", 0x0);
   m_fw->SetAlpideRegister("IRESET", 0x32);  //50
   m_fw->SetAlpideRegister("IDB", 0x40);     //64
   m_fw->SetAlpideRegister("IBIAS", 0x40);   //64
-  m_fw->SetAlpideRegister("ITHR", 51);    //51  empty 0x32; 0x12 data, not full.  0x33 default, threshold
+  m_fw->SetAlpideRegister("ITHR", ithr);   //51  empty 0x32; 0x12 data, not full.  0x33 default, threshold
   // 3.8.1 Configuration of in-pixel logic
   m_fw->SendAlpideBroadcast("PRST");  //pixel matrix reset
   m_fw->SetPixelRegisterFullChip("MASK_EN", 0);
@@ -62,8 +66,8 @@ void Layer::fw_init(){
   m_fw->SetAlpideRegister("TEST_CTRL", 0x400); //Disable Busy Line
   // 3.8.3.2 Setting FROMU Configuration Registers and enabling readout mode
   // FROMU Configuration Register 1,2
-  m_fw->SetAlpideRegister("FROMU_CONF_1", 0x00); //Disable external busy
-  m_fw->SetAlpideRegister("FROMU_CONF_2", 40); //STROBE duration
+  m_fw->SetAlpideRegister("FROMU_CONF_1", 0x00); //Disable external busy, no triger delay
+  m_fw->SetAlpideRegister("FROMU_CONF_2", 20); //STROBE duration, alice testbeam 100
   // FROMU Pulsing Register 1,2
   // m_fw->SetAlpideRegister("FROMU_PULSING_2", 0xffff); //yiliu: test pulse duration, max  
   // Periphery Control Register (CHIP MODE)
@@ -71,6 +75,8 @@ void Layer::fw_init(){
   // RORST 
   // m_fw->SendAlpideBroadcast("RORST"); //Readout (RRU/TRU/DMU) reset, commit token
   //===========end of init part =====================
+
+  std::fprintf(stdout, " fw init  %s\n", m_fw->DeviceUrl().c_str());
 }
 
 void Layer::rd_start(){
@@ -105,8 +111,9 @@ uint64_t Layer::AsyncPushBack(){ // IMPROVE IT AS A RING
 
   uint32_t tg_expected = 0;
   uint32_t flag_wait_first_event = true;
-  
+
   m_rd->Open();
+  std::fprintf(stdout, " rd start  %s\n", m_rd->DeviceUrl().c_str());
   m_is_async_reading = true;
   while (m_is_async_reading){
     auto df = m_rd? m_rd->Read(1000ms):nullptr; // TODO: read a vector
@@ -159,7 +166,7 @@ uint64_t Layer::AsyncPushBack(){ // IMPROVE IT AS A RING
     tg_expected ++;
   }
   m_rd->Close();
-  std::cout<< "aysnc exit"<<std::endl;
+  std::fprintf(stdout, " rd stop  %s\n", m_rd->DeviceUrl().c_str());
   return m_count_ring_write;
 }
 
@@ -349,18 +356,16 @@ std::vector<JadeDataFrameSP> Telescope::ReadEvent_Lastcopy(){
 
 
 void Telescope::Start(){
-  for(auto & l: m_vec_layer){
-    l->fw_init();
-  }
-  std::cout<< "fw_init"<<std::endl;
+  // for(auto & l: m_vec_layer){
+  //   l->fw_init();
+  // }
   for(auto & l: m_vec_layer){
     l->rd_start();
   }
-  std::cout<< "rd_start"<<std::endl;
   for(auto & l: m_vec_layer){
     l->fw_start();
   }
-  std::cout<< "fw_start"<<std::endl;
+  std::fprintf(stdout, "tel_start \n");
 
   if(!m_is_async_watching){
     m_fut_async_watch = std::async(std::launch::async, &Telescope::AsyncWatchDog, this);
@@ -398,7 +403,7 @@ void Telescope::Stop(){
     m_fut_async_watch.get();
   
   for(auto & l: m_vec_layer){
-    //l->fw_stop(); // commment out, unable to restart after fw_stop.
+    l->fw_stop(); // commment out, unable to restart after fw_stop.
   }
   
   for(auto & l: m_vec_layer){
@@ -456,7 +461,7 @@ uint64_t Telescope::AsyncRead(){
   }
   
   std::fwrite(reinterpret_cast<const char *>("]"), 1, 2, fd);
-  std::cout<< "aysnc exit, from Telescope::AsyncRead"<<std::endl;
+  std::fprintf(stdout, "aysnc exit, from Telescope::AsyncRead\n");
   fclose(fd);
   return n_ev;
 }
@@ -469,7 +474,7 @@ uint64_t Telescope::AsyncWatchDog(){
       std::cout<< l->GetStatusString();
     }
     uint64_t st_n_ev = m_st_n_ev;
-    printf("Tele: event(%u)\n\n", st_n_ev);
+    std::fprintf(stdout, "Tele: event(%u)\n\n", st_n_ev);
   }
   //sleep and watch running time status;
   return 0;

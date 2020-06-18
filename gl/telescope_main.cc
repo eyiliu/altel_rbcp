@@ -262,6 +262,20 @@ Usage:\n\
       tel.m_vec_layer[4]->m_fw->SetPixelRegisterFullChip("PULSE_EN", 1);
       
     }
+    else if ( std::regex_match(result, std::regex("\\s*(test)\\s+(delay)\\s+(?:(0[Xx])?([0-9]+))\\s+(?:(0[Xx])?([0-9]+))\\s*")) ){
+      std::cmatch mt;
+      std::regex_match(result, mt, std::regex("\\s*(test)\\s+(delay)\\s+(?:(0[Xx])?([0-9]+))\\s+(?:(0[Xx])?([0-9]+))\\s*"));
+
+      uint64_t s = std::stoull(mt[4].str(), 0, mt[3].str().empty()?10:16);
+      uint64_t d = std::stoull(mt[6].str(), 0, mt[5].str().empty()?10:16);
+      if(s>=tel.m_vec_layer.size()){
+        std::fprintf(stderr, "Layer %u does not exist. Do nothing. \n", s);
+        continue;
+      }      
+      tel.m_vec_layer[s]->m_fw->SetFirmwareRegister("TRIG_DELAY", d);
+      std::fprintf(stdout, "TRIG_DELAY @l%u  = %u \n", s, d);
+      
+    }
     else if( std::regex_match(result, std::regex("\\s*(threshold)\\s+(?:(0[Xx])?([0-9]+))\\s*")) ){
       std::cmatch mt;
       std::regex_match(result, mt, std::regex("\\s*(threshold)\\s+(?:(0[Xx])?([0-9]+))\\s*"));

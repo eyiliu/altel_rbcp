@@ -45,7 +45,8 @@ public:
   
   void InjectPulse();// test only, to be removed
   
-
+  const std::string& DeviceUrl();
+  
   static std::string LoadFileToString(const std::string& path);
 
 private:
