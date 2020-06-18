@@ -139,9 +139,9 @@ Usage:\n\
     else if (std::regex_match(result, std::regex("\\s*(start)\\s*"))){
       printf("starting \n");
       tel.Start();
-      // if(!flag_gl_running){
-      //   fut_gl_loop = std::async(std::launch::async, &async_gl_loop, &tel, &flag_gl_running);
-      // }
+      if(!flag_gl_running){
+        fut_gl_loop = std::async(std::launch::async, &async_gl_loop, &tel, &flag_gl_running);
+      }
     }
     else if (std::regex_match(result, std::regex("\\s*(stop)\\s*"))){
       printf("stop \n");
@@ -266,9 +266,11 @@ Usage:\n\
       std::regex_match(result, mt, std::regex("\\s*(test)\\s+(mask)\\s+(true|false)\\s*"));
       bool value =  (mt[3].str()=="true")?true:false;
       std::cout<< "mask " << value<<std::endl;
-
-      tel.m_vec_layer[2]->m_fw->SetPixelRegisterFullChip("MASK_EN", 1);
-      tel.m_vec_layer[4]->m_fw->SetPixelRegisterFullChip("PULSE_EN", 1);
+      
+      for(int i = 0; i< 250; i++){
+        tel.m_vec_layer[2]->m_fw->SetPixelRegisterFullRow(i, "MASK_EN", value);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
       
     }
     else if ( std::regex_match(result, std::regex("\\s*(test)\\s+(delay)\\s+(?:(0[Xx])?([0-9]+))\\s+(?:(0[Xx])?([0-9]+))\\s*")) ){
@@ -280,7 +282,7 @@ Usage:\n\
       if(s>=tel.m_vec_layer.size()){
         std::fprintf(stderr, "Layer %u does not exist. Do nothing. \n", s);
         continue;
-      }      
+      }
       tel.m_vec_layer[s]->m_fw->SetFirmwareRegister("TRIG_DELAY", d);
       std::fprintf(stdout, "TRIG_DELAY @l%u  = %u \n", s, d);
       

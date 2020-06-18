@@ -566,7 +566,7 @@ std::string FirmwarePortal::LoadFileToString(const std::string& path){
 
 
 void FirmwarePortal::SetRegionRegister(uint64_t region, const std::string& name, uint64_t value){
-  FormatPrint(std::cout, "INFO<%s>: %s( name=%s ,  value=%#016x )\n", __func__, __func__, name.c_str(), value);
+  DebugFormatPrint(std::cout, "INFO<%s>: %s( name=%s ,  value=%#016x )\n", __func__, __func__, name.c_str(), value);
   static const std::string array_name("CHIP_REG_LIST");
   auto& json_array = m_json[array_name];
   if(json_array.Empty()){
@@ -582,8 +582,6 @@ void FirmwarePortal::SetRegionRegister(uint64_t region, const std::string& name,
     if(json_addr.IsString()){
       uint64_t address_region_local = (std::stoull(json_reg["address"].GetString(), 0, 16)) & 0x07ff;
       uint64_t address = (region << 11) + address_region_local;
-      FormatPrint(std::cout, "INFO<%s>: %u(%#x)    %u(%#x) )\n", __func__, address, address, address_region_local, address_region_local);
-      
       SetFirmwareRegister("ADDR_CHIP_REG", address);
       SetFirmwareRegister("DATA_WRITE", value);
       SendFirmwareCommand("WRITE");
@@ -764,7 +762,7 @@ void FirmwarePortal::SetPixelRegister(uint64_t x, uint64_t y, const std::string&
   }
   
   uint64_t bit_ROWREGM_DATA = value? 0x0002:0x0000;
-  uint64_t bit_ROWREGM_SEL = (name=="MASK_EN")?0x0001:0x0000; // mismatch between pALPIDE-3 and ALPIDE manual, using p3
+  uint64_t bit_ROWREGM_SEL = (name=="MASK_EN")?0x0000:0x0001; // mismatch between pALPIDE-3 and ALPIDE manual, using later
   uint64_t conf_value = bit_ROWREGM_DATA | bit_ROWREGM_SEL;
 
   uint64_t column_line_region_number = x/32;
@@ -777,13 +775,13 @@ void FirmwarePortal::SetPixelRegister(uint64_t x, uint64_t y, const std::string&
   
   BroadcastRegionRegister("REGION_COLUMN_SELECT", 0);
   BroadcastRegionRegister("REGION_ROW_SELECT", 0); //disable all selection lines
-  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all change
   
   SetAlpideRegister("PIX_CONF_GLOBAL", conf_value);
   SetRegionRegister(column_line_region_number, "REGION_COLUMN_SELECT", column_line_number_local_pattern);
   SetRegionRegister(row_line_region_number, "REGION_ROW_SELECT", row_line_number_local_pattern);
 
-  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all regional change (only selected)
+  BroadcastRegionRegister("REGION_COLUMN_SELECT", 0);
+  BroadcastRegionRegister("REGION_ROW_SELECT", 0); //disable all selection lines
 }
 
 void FirmwarePortal::SetPixelRegisterFullChip(const std::string& name, uint64_t value){
@@ -793,32 +791,20 @@ void FirmwarePortal::SetPixelRegisterFullChip(const std::string& name, uint64_t 
   }
   
   uint64_t bit_ROWREGM_DATA = value? 0x0002:0x0000;
-  uint64_t bit_ROWREGM_SEL = (name=="MASK_EN")?0x0001:0x0000;
+  uint64_t bit_ROWREGM_SEL = (name=="MASK_EN")?0x0000:0x0001;
   uint64_t conf_value = bit_ROWREGM_DATA | bit_ROWREGM_SEL;
 
-  //not sure how to write pixel latch. toggle bit?
-  SetAlpideRegister("PIX_CONF_GLOBAL", 0);
-  SetAlpideRegister("TODO_MASK_PULSE", 0);
-  
+  //not sure what is toggle bit, ignored?
 
-  // BroadcastRegionRegister("REGION_COLUMN_SELECT", 0);
-  // BroadcastRegionRegister("REGION_ROW_SELECT", 0); //disable all selection lines
-
-  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_L", 0); //toggle all change
-  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_H", 0);
-  // BroadcastRegionRegister("REGION_TOGGLE_ROW", 0);
-
+  BroadcastRegionRegister("REGION_COLUMN_SELECT", 0);
+  BroadcastRegionRegister("REGION_ROW_SELECT", 0); //disable all selection lines
   
   SetAlpideRegister("PIX_CONF_GLOBAL", conf_value);  
   BroadcastRegionRegister("REGION_COLUMN_SELECT", 0xffffffff);
   BroadcastRegionRegister("REGION_ROW_SELECT", 0xffff); //enable all selection lines
-
-  SetAlpideRegister("TODO_MASK_PULSE", 0xffff);
-  SetAlpideRegister("TODO_MASK_PULSE_TOGGLE", 0xffff);
-
-  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_L", 0); //toggle all change
-  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_H", 0);
-  // BroadcastRegionRegister("REGION_TOGGLE_ROW", 0);
+  
+  BroadcastRegionRegister("REGION_COLUMN_SELECT", 0);
+  BroadcastRegionRegister("REGION_ROW_SELECT", 0); //disable all selection lines
 }
 
 
@@ -829,7 +815,7 @@ void FirmwarePortal::SetPixelRegisterFullColumn(uint64_t x, const std::string& n
   }
   
   uint64_t bit_ROWREGM_DATA = value? 0x0002:0x0000;
-  uint64_t bit_ROWREGM_SEL = (name=="MASK_EN")?0x0001:0x0000; // mismatch between pALPIDE-3 and ALPIDE manual, using p3
+  uint64_t bit_ROWREGM_SEL = (name=="MASK_EN")?0x0000:0x0001; // mismatch between pALPIDE-3 and ALPIDE manual, using later
   uint64_t conf_value = bit_ROWREGM_DATA | bit_ROWREGM_SEL;
 
   uint64_t column_line_region_number = x/32;
@@ -838,13 +824,13 @@ void FirmwarePortal::SetPixelRegisterFullColumn(uint64_t x, const std::string& n
   
   BroadcastRegionRegister("REGION_COLUMN_SELECT", 0);
   BroadcastRegionRegister("REGION_ROW_SELECT", 0); //disable all selection lines
-  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all change
   
   SetAlpideRegister("PIX_CONF_GLOBAL", conf_value);
   SetRegionRegister(column_line_region_number, "REGION_COLUMN_SELECT", column_line_number_local_pattern);
   BroadcastRegionRegister("REGION_ROW_SELECT", 0xffff); //enable all row selection lines
 
-  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all regional change (only selected)  
+  BroadcastRegionRegister("REGION_COLUMN_SELECT", 0);
+  BroadcastRegionRegister("REGION_ROW_SELECT", 0); //disable all selection lines
 }
 
 void FirmwarePortal::SetPixelRegisterFullRow(uint64_t y, const std::string& name, uint64_t value){
@@ -854,23 +840,22 @@ void FirmwarePortal::SetPixelRegisterFullRow(uint64_t y, const std::string& name
   }
   
   uint64_t bit_ROWREGM_DATA = value? 0x0002:0x0000;
-  uint64_t bit_ROWREGM_SEL = (name=="MASK_EN")?0x0001:0x0000; // mismatch between pALPIDE-3 and ALPIDE manual, using p3
+  uint64_t bit_ROWREGM_SEL = (name=="MASK_EN")?0x0000:0x0001; // mismatch between pALPIDE-3 and ALPIDE manual, using later
   uint64_t conf_value = bit_ROWREGM_DATA | bit_ROWREGM_SEL;
 
   uint64_t row_line_region_number = y/16;
   uint64_t row_line_number_local = y%16;
   uint64_t row_line_number_local_pattern = 1ULL << row_line_number_local;
-
   
   BroadcastRegionRegister("REGION_COLUMN_SELECT", 0);
   BroadcastRegionRegister("REGION_ROW_SELECT", 0); //disable all selection lines
-  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all change
   
   SetAlpideRegister("PIX_CONF_GLOBAL", conf_value);
   BroadcastRegionRegister("REGION_COLUMN_SELECT", 0xffffffff); //enable all column selection lines
   SetRegionRegister(row_line_region_number, "REGION_ROW_SELECT", row_line_number_local_pattern);
 
-  // BroadcastRegionRegister("REGION_TOGGLE_COLUMN_ROW", 0); //toggle all regional change (only selected)
+  BroadcastRegionRegister("REGION_COLUMN_SELECT", 0);
+  BroadcastRegionRegister("REGION_ROW_SELECT", 0); //disable all selection lines
 }
 
 

@@ -479,27 +479,6 @@
 	    "reset":"0x0000",
 	    "description":"Regional, toggle comumn and row selection. Payload data is ignored"
         },
-        {
-	    "name":"TODO_MASK_PULSE",
-	    "address":"0x0487",
-	    "bytes":2,
-	    "words":1,
-	    "read":false,
-	    "write":true,
-	    "reset":"0x0000",
-	    "description":"All columns and rows are selected, need to toggle"
-	},
-        {
-	    "name":"TODO_MASK_PULSE_TOGGLE",
-	    "address":"0x0497",
-	    "bytes":2,
-	    "words":1,
-	    "read":false,
-	    "write":true,
-	    "reset":"0x0000",
-	    "description":"All columns and rows are selected, it is toggle, but not work"
-	},
-
 	{
 	    "name":"PIX_CONF_GLOBAL",
 	    "address":"0x0500",
@@ -508,7 +487,7 @@
 	    "read":true,
 	    "write":true,
 	    "reset":"0x0000",
-	    "description":"Pixel Configuration Register, [0]: ROWREGM_SEL (NOTE mismath between manuals: true:MASK_EN at p3 manual, true:PULSE_EN at alpide manual, using p3); [1]: PIXCNFG_DATA"
+	    "description":"Pixel Configuration Register, [0]: ROWREGM_SEL (NOTE mismath between manuals: true:MASK_EN at p3 manual, true:PULSE_EN at alpide manual, using later); [1]: PIXCNFG_DATA"
 	}, 
 	{
 	    "name":"ANALOG_MON_OVERRIDE",
