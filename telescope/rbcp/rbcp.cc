@@ -167,12 +167,12 @@ int rbcp::rbcp_com(const char* ipAddr, unsigned int port, struct rbcp_header* se
     FD_ZERO(&setSelect);
     FD_SET(sock, &setSelect);
 
-    timeout.tv_sec  = 1;
+    timeout.tv_sec  = 4;
     timeout.tv_usec = 0;
  
     if(select(sock+1, &setSelect, NULL, NULL,&timeout)==0){
       /* time out */
-      puts("\n***** Timeout ! *****");
+      puts("\n*****ACK packet timeout, resend data *****");
       m_id++;
       sendHeader->id = m_id;
       memcpy(sndBuf,sendHeader, sizeof(struct rbcp_header));

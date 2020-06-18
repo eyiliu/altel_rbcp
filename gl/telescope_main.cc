@@ -107,7 +107,7 @@ Usage:\n\
                                    static const char* examples[] =
                                      {"help", "start", "stop", "init", "threshold", "window", "info",
                                       "connect","quit", "exit", "sensor", "firmware", "set", "get", "region",
-                                      "broadcast", "pixel", "true", "reset","false", "ITHR", "mask",
+                                      "broadcast", "pixel", "true", "reset","false", "ITHR", "mask", "command"
                                       "x", "y",
                                       NULL};
                                    size_t i;
@@ -139,9 +139,9 @@ Usage:\n\
     else if (std::regex_match(result, std::regex("\\s*(start)\\s*"))){
       printf("starting \n");
       tel.Start();
-      if(!flag_gl_running){
-        fut_gl_loop = std::async(std::launch::async, &async_gl_loop, &tel, &flag_gl_running);
-      }
+      // if(!flag_gl_running){
+      //   fut_gl_loop = std::async(std::launch::async, &async_gl_loop, &tel, &flag_gl_running);
+      // }
     }
     else if (std::regex_match(result, std::regex("\\s*(stop)\\s*"))){
       printf("stop \n");
@@ -153,15 +153,14 @@ Usage:\n\
     }
     else if (std::regex_match(result, std::regex("\\s*(init)\\s*"))){
       printf("init \n");
-      for(auto& l: tel.m_vec_layer){
-        l->fw_init();
-      }
+      tel.Init();
     }
     else if (std::regex_match(result, std::regex("\\s*(reset)\\s*"))){
       printf("reset \n");
       for(auto& l: tel.m_vec_layer){
         l->m_fw->SendFirmwareCommand("RESET");
       }
+      
     }
 
     else if ( std::regex_match(result, std::regex("\\s*(sensor)\\s+(set)\\s+(\\w+)\\s+(?:(0[Xx])?([0-9]+))\\s*")) ){
@@ -241,6 +240,16 @@ Usage:\n\
         fprintf(stderr, "%s = %u, %#x\n", name.c_str(), value, value);
       }
     }
+    else if ( std::regex_match(result, std::regex("\\s*(firmware)\\s+(command)\\s+(\\w+)\\s*")) ){
+      std::cmatch mt;
+      std::regex_match(result, mt, std::regex("\\s*(firmware)\\s+(command)\\s+(\\w+)\\s*"));
+      std::string name = mt[3].str();
+      for(auto& l: tel.m_vec_layer){
+        auto &fw = l->m_fw;
+        fw->SendFirmwareCommand(name);
+      }
+    }
+
     else if ( std::regex_match(result, std::regex("\\s*(pixel)\\s+(mask)\\s+(?:(0[Xx])?([0-9]+))\\s+(?:(0[Xx])?([0-9]+))\\s+(true|false)\\s*")) ){
       std::cmatch mt;
       std::regex_match(result, mt, std::regex("\\s*(pixel)\\s+(mask)\\s+(?:(0[Xx])?([0-9]+))\\s+(?:(0[Xx])?([0-9]+))\\s+(true|false)\\s*"));

@@ -87,7 +87,8 @@ public:
   ~Telescope();
   Telescope(const std::string& file_context);
   std::vector<JadeDataFrameSP> ReadEvent();
-  
+
+  void Init();
   void Start();
   void Stop();
   void Start_no_tel_reading();

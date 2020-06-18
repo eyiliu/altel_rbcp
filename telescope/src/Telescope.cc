@@ -7,21 +7,24 @@ using namespace std::chrono_literals;
 void Layer::fw_start(){
   if(!m_fw) return;
   m_fw->SetAlpideRegister("CMU_DMU_CONF", 0x70);// token
-  m_fw->SendAlpideBroadcast("RORST"); //Readout (RRU/TRU/DMU) reset, commit token
   m_fw->SetAlpideRegister("CHIP_MODE", 0x3d); //trigger MODE
+  m_fw->SendAlpideBroadcast("RORST"); //Readout (RRU/TRU/DMU) reset, commit token
   m_fw->SetFirmwareRegister("FIRMWARE_MODE", 1); //run ext trigger
   std::fprintf(stdout, " fw start %s\n", m_fw->DeviceUrl().c_str());
 }
 
 void Layer::fw_stop(){
   if(!m_fw) return;
+  m_fw->SetFirmwareRegister("FIRMWARE_MODE", 0); //fw must be stopped before chip
   m_fw->SetAlpideRegister("CHIP_MODE", 0x3c); // configure mode
-  m_fw->SetFirmwareRegister("FIRMWARE_MODE", 0);
   std::fprintf(stdout, " fw stop  %s\n", m_fw->DeviceUrl().c_str());
 }
 
 void Layer::fw_init(){
   if(!m_fw) return;
+
+  //m_fw->SendFirmwareCommand("RESET");
+  
   m_fw->SetFirmwareRegister("TRIG_DELAY", 1); //25ns per dig (FrameDuration?)
   m_fw->SetFirmwareRegister("GAP_INT_TRIG", 20);
 
@@ -355,10 +358,15 @@ std::vector<JadeDataFrameSP> Telescope::ReadEvent_Lastcopy(){
 }
 
 
+
+void Telescope::Init(){
+  for(auto & l: m_vec_layer){
+    l->fw_init();
+  }
+}
+
+
 void Telescope::Start(){
-  // for(auto & l: m_vec_layer){
-  //   l->fw_init();
-  // }
   for(auto & l: m_vec_layer){
     l->rd_start();
   }
@@ -376,9 +384,6 @@ void Telescope::Start(){
 }
 
 void Telescope::Start_no_tel_reading(){
-  for(auto & l: m_vec_layer){
-    l->fw_init();
-  }
   for(auto & l: m_vec_layer){
     l->rd_start();
   }
@@ -403,7 +408,7 @@ void Telescope::Stop(){
     m_fut_async_watch.get();
   
   for(auto & l: m_vec_layer){
-    l->fw_stop(); // commment out, unable to restart after fw_stop.
+    l->fw_stop();
   }
   
   for(auto & l: m_vec_layer){
@@ -461,8 +466,8 @@ uint64_t Telescope::AsyncRead(){
   }
   
   std::fwrite(reinterpret_cast<const char *>("]"), 1, 2, fd);
-  std::fprintf(stdout, "aysnc exit, from Telescope::AsyncRead\n");
   fclose(fd);
+  std::fprintf(stdout, "Tele: disk file closed\n");
   return n_ev;
 }
 
