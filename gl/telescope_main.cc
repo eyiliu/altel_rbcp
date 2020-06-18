@@ -40,7 +40,15 @@ void fw_threshold(FirmwarePortal *m_fw, uint32_t thrshold){
 }
 
 
+uint64_t async_gl_loop(Telescope *ptel, bool *pflag_gl_running);
+
+
+static sig_atomic_t g_done = 0;
 int main(int argc, char **argv){
+  // signal(SIGINT, [](int){g_done+=1;});
+  std::future<uint64_t> fut_gl_loop;
+  bool flag_gl_running = false;
+  
   const std::string help_usage("\n\
 Usage:\n\
 -c json_file: path to json file\n\
@@ -114,6 +122,12 @@ Usage:\n\
   while (1) {
     char* result = linenoise(prompt);
     if (result == NULL) {
+      if(linenoiseKeyType() == 1 ){ //ctrl-c
+        flag_gl_running = false;
+        if(fut_gl_loop.valid()){
+          fut_gl_loop.get();
+        }
+      }
       break;
     }    
     if ( std::regex_match(result, std::regex("\\s*(quit|exit)\\s*")) ){
@@ -125,62 +139,17 @@ Usage:\n\
     else if (std::regex_match(result, std::regex("\\s*(start)\\s*"))){
       printf("starting \n");
       tel.Start();
-
-      TelescopeGL telgl;
-      telgl.addTelLayer(0, 0, 0,   1, 0, 0, 0.028, 0.026, 1.0, 1024, 512);
-      telgl.addTelLayer(0, 0, 30,  0, 1, 0, 0.028, 0.026, 1.0, 1024, 512);
-      telgl.addTelLayer(0, 0, 60,  0, 0, 1, 0.028, 0.026, 1.0, 1024, 512);
-      telgl.addTelLayer(0, 0, 120, 0.5, 0.5, 0, 0.028, 0.026, 1.0, 1024, 512);
-      telgl.addTelLayer(0, 0, 150, 0, 1, 1, 0.028, 0.026, 1.0, 1024, 512);
-      telgl.addTelLayer(0, 0, 180, 1, 0, 1, 0.028, 0.026, 1.0, 1024, 512);
-      telgl.buildProgramTel();
-      telgl.buildProgramHit();
-
-      bool running = true;
-      uint64_t n_gl_frame = 0;
-      while (running)
-      {
-        sf::Event windowEvent;
-        while (telgl.m_window->pollEvent(windowEvent))
-        {
-          switch (windowEvent.type)
-          {
-          case sf::Event::Closed:
-            running = false;
-            break;
-          }  
-        }
-        telgl.clearHit();
-        
-        auto ev_col =tel.ReadEvent_Lastcopy();
-        if(ev_col.empty())
-          continue;
-        
-        for(auto& e: ev_col){
-          auto it_x = e->Data_X().begin();
-          auto it_y = e->Data_Y().begin();
-          auto it_z = e->Data_D().begin();
-          auto it_x_end = e->Data_X().end();
-          while(it_x!=it_x_end){
-            telgl.addHit(*it_x, *it_y, *it_z);
-            it_x ++;
-            it_y ++;
-            it_z ++;
-          }
-        }
-            
-        telgl.clearFrame();
-        telgl.drawTel();
-        telgl.drawHit();
-        telgl.flushFrame();
-        n_gl_frame ++;
-        //std::cout<< n_gl_frame<<std::endl;
-        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      if(!flag_gl_running){
+        fut_gl_loop = std::async(std::launch::async, &async_gl_loop, &tel, &flag_gl_running);
       }
     }
     else if (std::regex_match(result, std::regex("\\s*(stop)\\s*"))){
       printf("stop \n");
       tel.Stop();
+      flag_gl_running = false;
+      if(fut_gl_loop.valid()){
+        fut_gl_loop.get();
+      }
     }
     else if (std::regex_match(result, std::regex("\\s*(init)\\s*"))){
       printf("init \n");
@@ -289,14 +258,6 @@ Usage:\n\
       bool value =  (mt[3].str()=="true")?true:false;
       std::cout<< "mask " << value<<std::endl;
 
-      // for(int i=0; i<400; i++){
-      //   tel.m_vec_layer[0]->m_fw->SetPixelRegisterFullRow(i, "MASK_EN", value);
-      // }
-
-      // for(int i=0; i<400; i++){
-      //   tel.m_vec_layer[1]->m_fw->SetPixelRegisterFullRow(i, "PULSE_EN", value);
-      // }
-
       tel.m_vec_layer[2]->m_fw->SetPixelRegisterFullChip("MASK_EN", 1);
       tel.m_vec_layer[4]->m_fw->SetPixelRegisterFullChip("PULSE_EN", 1);
       
@@ -328,4 +289,72 @@ Usage:\n\
 
   linenoiseHistorySave(linenoise_history_path);
   linenoiseHistoryFree();
+}
+
+
+uint64_t async_gl_loop(Telescope *ptel, bool *pflag_gl_running){
+  Telescope &tel = *ptel;
+  bool &flag_gl_running = *pflag_gl_running;
+  flag_gl_running = true;
+  
+  TelescopeGL telgl;
+  telgl.addTelLayer(0, 0, 0,   1, 0, 0, 0.028, 0.026, 1.0, 1024, 512);
+  telgl.addTelLayer(0, 0, 30,  0, 1, 0, 0.028, 0.026, 1.0, 1024, 512);
+  telgl.addTelLayer(0, 0, 60,  0, 0, 1, 0.028, 0.026, 1.0, 1024, 512);
+  telgl.addTelLayer(0, 0, 120, 0.5, 0.5, 0, 0.028, 0.026, 1.0, 1024, 512);
+  telgl.addTelLayer(0, 0, 150, 0, 1, 1, 0.028, 0.026, 1.0, 1024, 512);
+  telgl.addTelLayer(0, 0, 180, 1, 0, 1, 0.028, 0.026, 1.0, 1024, 512);
+  telgl.buildProgramTel();
+  telgl.buildProgramHit();
+
+  uint64_t n_gl_frame = 0;
+  bool flag_pausing = false;
+  sf::Event windowEvent;
+  while ( flag_gl_running ){
+    while (telgl.m_window->pollEvent(windowEvent)){
+      switch (windowEvent.type){
+      case sf::Event::Closed:
+        flag_gl_running = false;
+        break;
+      case sf::Event::KeyPressed:
+        flag_pausing = true;
+        break;
+      case sf::Event::KeyReleased:
+        flag_pausing = false;
+        break;
+      }
+    }
+    if(flag_pausing){
+      continue;
+    }
+    
+    telgl.clearHit();
+    
+    auto ev_col =tel.ReadEvent_Lastcopy();
+    if(ev_col.empty())
+      continue;
+        
+    for(auto& e: ev_col){
+      auto it_x = e->Data_X().begin();
+      auto it_y = e->Data_Y().begin();
+      auto it_z = e->Data_D().begin();
+      auto it_x_end = e->Data_X().end();
+      while(it_x!=it_x_end){
+        telgl.addHit(*it_x, *it_y, *it_z);
+        it_x ++;
+        it_y ++;
+        it_z ++;
+      }
+    }
+    
+    telgl.clearFrame();
+    telgl.drawTel();
+    telgl.drawHit();
+    telgl.flushFrame();
+    n_gl_frame ++;
+  }
+
+  flag_gl_running = false;
+
+  return n_gl_frame;
 }
