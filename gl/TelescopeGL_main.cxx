@@ -24,6 +24,16 @@
 #include "linenoise.h"
 #include "myrapidjson.h"
 
+template<typename T>
+static void PrintJson(const T& o){
+    rapidjson::StringBuffer sb;
+    rapidjson::Writer<rapidjson::StringBuffer> w(sb);
+    o.Accept(w);
+    rapidjson::PutN(sb, '\n', 1);
+    std::fwrite(sb.GetString(), 1, sb.GetSize(), stdout);
+}
+
+
 struct Position{
   uint16_t x;
   uint16_t y;
@@ -155,16 +165,15 @@ int main(int argc, char **argv){
         }
         telgl.clearHit();
         
-        
         for (auto& subev : ev_it->GetArray()){
+          PrintJson(subev);
           for (auto& hit : subev["hit_xyz_array"].GetArray()){
-            telgl.addHit(hit[0].GetInt(), hit[1].GetInt(), hit[2].GetInt());
-            
-            
+            telgl.addHit(hit[0].GetInt(), hit[1].GetInt(), hit[2].GetInt());            
             
           }
         }
-        
+        std::cout<<std::endl;
+       
         telgl.clearFrame();
         telgl.drawTel();
         telgl.drawHit();

@@ -43,11 +43,7 @@ public:
   template <typename W>
   void Deserialize(W& w) const {
     
-
   }
-
-
-
   
   template <typename W>
   void Serialize(W& w) const {
@@ -59,13 +55,22 @@ public:
       w.String("geo");
       w.StartArray();
       {
-        w.Uint(m_n_x);
-        w.Uint(m_n_y);
-        w.Uint(m_n_d);
+        w.StartArray();
+        {
+          w.Uint(m_n_x);
+          w.Double(29.24);
+        }
+        w.EndArray();
+        w.StartArray();
+        {
+          w.Uint(m_n_y);
+          w.Double(26.88);
+        }
+        w.EndArray();        
       }
       w.EndArray();
       
-      w.String("trigger");
+      w.String("tri");
       w.Uint(m_counter);
 
       w.String("ext");
