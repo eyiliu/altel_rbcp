@@ -249,7 +249,6 @@ Usage:\n\
         fw->SendFirmwareCommand(name);
       }
     }
-
     else if ( std::regex_match(result, std::regex("\\s*(pixel)\\s+(mask)\\s+(?:(0[Xx])?([0-9]+))\\s+(?:(0[Xx])?([0-9]+))\\s+(true|false)\\s*")) ){
       std::cmatch mt;
       std::regex_match(result, mt, std::regex("\\s*(pixel)\\s+(mask)\\s+(?:(0[Xx])?([0-9]+))\\s+(?:(0[Xx])?([0-9]+))\\s+(true|false)\\s*"));
@@ -308,6 +307,32 @@ Usage:\n\
         std::cout<<"\n\ncurrent ip  " <<ip0<<":"<<ip1<<":"<<ip2<<":"<<ip3<<"\n\n"<<std::endl;
       }
     }
+    else if ( std::regex_match(result, std::regex("\\s*(sensor)\\s+(?:(0[Xx])?([0-9]+))\\s+(test)\\s*")) ){
+      std::cmatch mt;
+      std::regex_match(result, mt, std::regex("\\s*(sensor)\\s+(?:(0[Xx])?([0-9]+))\\s+(test)\\s*"));
+      uint64_t s = std::stoull(mt[3].str(), 0, mt[2].str().empty()?10:16);
+      
+      std::fprintf(stdout, "sensor@s%u register read-write test \n", s);
+      uint32_t value_old = tel.m_vec_layer[s]->m_fw->GetAlpideRegister("DISABLE_REGIONS");
+      uint32_t value_new = value_old + 1;
+      tel.m_vec_layer[s]->m_fw->SetAlpideRegister("DISABLE_REGIONS", value_new);
+      uint32_t value_new_readback = tel.m_vec_layer[s]->m_fw->GetAlpideRegister("DISABLE_REGIONS");
+      tel.m_vec_layer[s]->m_fw->SetAlpideRegister("DISABLE_REGIONS", value_old); 
+      uint32_t value_restored_readback = tel.m_vec_layer[s]->m_fw->GetAlpideRegister("DISABLE_REGIONS");
+      
+      if(value_restored_readback != value_old || value_new_readback != value_new){
+        std::fprintf(stderr, "sensor@s%u register read-write does not match test\n", s);
+      }
+      else{
+        std::fprintf(stdout, "sensor@s%u register read-write is tested successfully\n", s);
+      }
+    }
+    else{
+      if(strlen(result)){
+        std::fprintf(stderr, "unknown command pattern\n");
+      }
+    }
+    
     linenoiseHistoryAdd(result);
     free(result);
   }
