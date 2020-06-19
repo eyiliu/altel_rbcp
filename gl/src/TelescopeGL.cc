@@ -251,3 +251,56 @@ void TelescopeGL::terminateGL(){
   if(m_window){m_window->close(); m_window.reset();}
 }
 
+
+
+
+//////////////////track, removed layer imformation
+
+void TelescopeGL::buildProgramTrack(){
+  m_vertexShader_track = createShader(GL_VERTEX_SHADER, vertexShaderSrc_track);
+  m_geometryShader_track = createShader(GL_GEOMETRY_SHADER, geometryShaderSrc_track);
+  m_fragmentShader_track = createShader(GL_FRAGMENT_SHADER, fragmentShaderSrc);
+
+  m_shaderProgram_track = glCreateProgram();
+  glAttachShader(m_shaderProgram_track, m_vertexShader_track);
+  glAttachShader(m_shaderProgram_track, m_geometryShader_track);
+  glAttachShader(m_shaderProgram_track, m_fragmentShader_track);
+  glLinkProgram(m_shaderProgram_track);
+
+  glUseProgram(m_shaderProgram_track);
+  glGenVertexArrays(1, &m_vao_track);
+  glBindVertexArray(m_vao_track);
+
+  glGenBuffers(1, &m_vbo_track);    
+  glBindBuffer(GL_ARRAY_BUFFER, m_vbo_track);
+  glNamedBufferData(m_vbo_track, sizeof(GLint)*m_points_track.size(), m_points_track.data(), GL_STATIC_DRAW); 
+  
+  GLint posAttrib_track = glGetAttribLocation(m_shaderProgram_track, "pos");
+  glEnableVertexAttribArray(posAttrib_track);
+  glVertexAttribIPointer(posAttrib_track, 3,  GL_FLOAT, 3 * sizeof(GLfloat), 0);
+  
+  m_uniModel_track = glGetUniformLocation(m_shaderProgram_track, "model");
+  m_uniView_track = glGetUniformLocation(m_shaderProgram_track, "view");
+  m_uniProj_track = glGetUniformLocation(m_shaderProgram_track, "proj");
+
+  glUniformMatrix4fv(m_uniModel_track, 1, GL_FALSE, glm::value_ptr(m_model));
+  glUniformMatrix4fv(m_uniView_track, 1, GL_FALSE, glm::value_ptr(m_view));
+  glUniformMatrix4fv(m_uniProj_track, 1, GL_FALSE, glm::value_ptr(m_proj));
+}
+
+void TelescopeGL::drawTrack(){
+  glUseProgram(m_shaderProgram_track);
+  glBindVertexArray(m_vao_track);
+  glNamedBufferData(m_vbo_track, sizeof(GLfloat)*m_points_track.size(), m_points_track.data(), GL_STATIC_DRAW);
+  glDrawArrays(GL_POINTS, 0, m_points_track.size()/3); //TODO: a line =? 2 points, this part is copied from hit
+  //glDrawArrays(GL_LINES ? 
+};
+
+void TelescopeGL::addTrack(float px, float py, float pz, float dx, float dy, float dz){
+  std::vector<GLfloat> t{px, py, pz, dx, dy, dz};
+  m_points_track.insert(m_points_track.end(), t.begin(), t.end());
+};
+
+void TelescopeGL::clearTrack(){
+  m_points_track.clear();
+};

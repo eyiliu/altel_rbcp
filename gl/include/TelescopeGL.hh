@@ -17,7 +17,10 @@ struct UniformLayer{
   GLfloat color[4]{0,1,0,0}; //vec3, pad
   GLfloat pitch[4]{0.028, 0.026, 1, 0}; //pitch x,y, thick z, pad
   GLint   npixel[4]{1024, 512,   1, 0};//pixe number x, y, z/1, pad
-  GLfloat miss_alignment[16]{1, 0, 0, 0,0, 1, 0, 0,0, 0, 1, 0,0, 0, 0, 1}; //mat4
+  GLfloat miss_alignment[16]{1, 0, 0, 0,
+                             0, 1, 0, 0,
+                             0, 0, 1, 0,
+                             0, 0, 0, 1 }; //mat4
 };
 
 class TelescopeGL{
@@ -46,7 +49,7 @@ public:
   
   static const GLchar* vertexShaderSrc_hit;
   static const GLchar* geometryShaderSrc_hit;
-  static const GLchar* fragmentShaderSrc_hit;
+  // static const GLchar* fragmentShaderSrc_hit;
   GLuint m_vertexShader_hit{0};
   GLuint m_geometryShader_hit{0};
   GLuint m_fragmentShader_hit{0};
@@ -58,6 +61,20 @@ public:
   GLint m_uniProj_hit{0}; 
   std::vector<GLint> m_points_hit;
   std::vector<GLuint> m_uboLayers_hit;
+
+  static const GLchar* vertexShaderSrc_track;
+  static const GLchar* geometryShaderSrc_track;
+  // static const GLchar* fragmentShaderSrc_track;
+  GLuint m_vertexShader_track{0};
+  GLuint m_geometryShader_track{0};
+  GLuint m_fragmentShader_track{0};
+  GLuint m_shaderProgram_track{0};
+  GLuint m_vao_track{0};
+  GLuint m_vbo_track{0};
+  GLint m_uniModel_track{0};
+  GLint m_uniView_track{0};
+  GLint m_uniProj_track{0}; 
+  std::vector<GLfloat> m_points_track;
   
   TelescopeGL();
   ~TelescopeGL();
@@ -68,20 +85,24 @@ public:
   void addTelLayer(float    posx,     float posy,     float posz, 
                    float    colorr,   float colorg,   float colorb, 
                    float    pitchx,   float pitchy,   float thickz,
-                   uint32_t pixelx,   uint32_t pixely);
-
-  
+                   uint32_t pixelx,   uint32_t pixely);  
   void buildProgramTel();
+  void drawTel();
+
   void buildProgramHit();
+  void drawHit();
+  void addHit(int32_t px, int32_t py, int32_t pz);
+  void clearHit();
+
+  void buildProgramTrack();
+  void drawTrack();
+  void addTrack(float px, float py, float pz,
+                float dx, float dy, float dz); // P+t*D
+  void clearTrack();
+
 
   void clearFrame();
   void flushFrame();
-  void drawTel();
-  void drawHit();
-
-  void addHit(int32_t px, int32_t py, int32_t pz);
-  void clearHit();
-  
   static GLuint createShader(GLenum type, const GLchar* src);  
 };
 
