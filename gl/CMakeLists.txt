@@ -17,7 +17,11 @@ target_link_libraries(mygl_reader PRIVATE telgl mycommon telescope)
 add_executable(mytel_gl telescope_main.cc)
 target_link_libraries(mytel_gl PRIVATE telgl mycommon telescope)
 
-install(TARGETS telgl mytel_gl mygl_reader
+add_executable(myfit myfit_main.cc)
+target_link_libraries(myfit PRIVATE telgl mycommon telescope)
+
+
+install(TARGETS telgl mytel_gl mygl_reader myfit
   EXPORT ${PROJECT_NAME}Targets
   RUNTIME       DESTINATION bin      COMPONENT runtime
   LIBRARY       DESTINATION lib      COMPONENT runtime

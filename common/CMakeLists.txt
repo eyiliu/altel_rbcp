@@ -1,6 +1,7 @@
 add_subdirectory(linenoiseng)
 add_subdirectory(getopt)
 add_subdirectory(rapidjson)
+add_subdirectory(gte)
 
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -13,6 +14,7 @@ target_link_libraries(mycommon INTERFACE
   getopt
   rapidjson
   Threads::Threads
+  gte
   )
 
 target_include_directories(mycommon
