@@ -14,6 +14,7 @@
 // or
 // not enable
 
+#  define RAPIDJSON_HAS_CXX11_RANGE_FOR 1
 #  define RAPIDJSON_HAS_STDSTRING 1
 #  define RAPIDJSON_NO_INT64DEFINE
    namespace rapidjson { typedef ::std::uint64_t uint64_t; typedef ::std::int64_t int64_t;}

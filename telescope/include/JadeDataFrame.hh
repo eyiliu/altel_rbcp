@@ -37,8 +37,9 @@ public:
   uint64_t GetCounter();
   uint64_t GetExtension();
     
+  rapidjson::Value JSON( rapidjson::MemoryPoolAllocator<> &a) const;
   void Print(std::ostream& os, size_t ws = 0) const;
-
+  
   template <typename W>
   void Serialize(W& w) const {
     w.StartObject();
@@ -68,7 +69,7 @@ public:
           {
             w.Double(ch.x());
             w.Double(ch.y());
-            w.Double(ch.z());
+            w.Uint(ch.z());
           }
           w.EndArray();
         
@@ -92,7 +93,7 @@ public:
     w.EndObject();
   }  
 
-  static const uint16_t s_version{2};
+  static const uint16_t s_version{3};
   std::string m_data_raw;
   uint16_t m_level_decode{0};
   uint64_t m_counter{0};

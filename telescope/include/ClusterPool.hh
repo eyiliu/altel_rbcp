@@ -68,6 +68,8 @@ struct ClusterHit{
       centerY+= ph.y();
       surfIndex = ph.z();
     }
+    centerX *= 29.24;
+    centerY *= 26.88;
     centerX /= pixelSize;
     centerY /= pixelSize;
   }
@@ -84,4 +86,3 @@ public:
 };
 
 #endif
-
