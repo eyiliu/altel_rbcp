@@ -153,9 +153,9 @@ int main(int argc, char **argv){
 
         cpool.buildClusters();
 
-        uint64_t nc = cpool.m_cluster_col.size();
+        uint64_t nc = cpool.m_clusters.size();
         for(uint64_t i = 0; i< nc; i++){
-          auto &cluster = cpool.m_cluster_col[i];
+          auto &cluster = cpool.m_clusters[i];
           std::fprintf(stdout, "\n cluster@%u: [%f, %f, %u] \n", i, cluster.centerX, cluster.centerX, cluster.surfIndex);
           for(auto& ph: cluster.pixelHits){
             uint64_t hx = ph.x();

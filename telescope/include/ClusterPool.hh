@@ -24,17 +24,22 @@ struct PixelHit{
     return data.index < rh.data.index;
   }
   
-  inline uint64_t& index() {return data.index;}
-  inline uint16_t& x() {return data.loc[0];}
-  inline uint16_t& y() {return data.loc[1];}
-  inline uint16_t& z() {return data.loc[2];}
+  inline const uint64_t& index() const  {return data.index;}
+  inline const uint16_t& x() const  {return data.loc[0];}
+  inline const uint16_t& y() const  {return data.loc[1];}
+  inline const uint16_t& z() const  {return data.loc[2];}
+  inline uint64_t& index(){return data.index;}
+  inline uint16_t& x(){return data.loc[0];}
+  inline uint16_t& y(){return data.loc[1];}
+  inline uint16_t& z(){return data.loc[2];}
+
 };
 
 struct ClusterHit{
   double   centerX{0};
   double   centerY{0};
-  uint32_t surfIndex{0};
-  uint32_t pixelSize{0};
+  uint16_t surfIndex{0};
+  uint16_t pixelSize{0};
   std::vector<PixelHit> pixelHits;
 
   ClusterHit(std::vector<PixelHit> &&hits)
@@ -46,6 +51,11 @@ struct ClusterHit{
     :pixelHits(hits)
   {
   };
+  
+  inline const double& x() const{return centerX;}
+  inline const double& y() const{return centerY;}
+  inline const uint16_t& z() const{return surfIndex;}
+  inline const uint16_t& size() const{return pixelSize;}
   
   void buildClusterCenter(){
     if(pixelSize)
@@ -66,13 +76,12 @@ struct ClusterHit{
 class ClusterPool{
 public:
   inline void addHit(uint16_t x, uint16_t y, uint16_t z){
-    m_hit_col.emplace_back(x, y, z);
-  }  
+    m_hits.emplace_back(x, y, z);
+  }
   void buildClusters();  
-  std::vector<PixelHit> m_hit_col;
-  std::vector<ClusterHit> m_cluster_col;
+  std::vector<PixelHit> m_hits;
+  std::vector<ClusterHit> m_clusters;  
 };
-
 
 #endif
 

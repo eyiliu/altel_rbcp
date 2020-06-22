@@ -3,7 +3,7 @@
 #include <algorithm>
   
 void ClusterPool::buildClusters(){
-  auto hit_col_remain= m_hit_col;
+  auto hit_col_remain= m_hits;
 
   while(!hit_col_remain.empty()){
     std::vector<PixelHit> hit_col_this_cluster;
@@ -43,10 +43,10 @@ void ClusterPool::buildClusters(){
       hit_col_this_cluster.push_back(e);
       hit_col_this_cluster_edge.erase(hit_col_this_cluster_edge.begin());  
     } 
-    m_cluster_col.emplace_back(std::move(hit_col_this_cluster));
+    m_clusters.emplace_back(std::move(hit_col_this_cluster));
   }
 
-  for(auto &c : m_cluster_col){
+  for(auto &c : m_clusters){
     c.buildClusterCenter();
   }
 }

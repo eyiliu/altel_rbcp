@@ -2,7 +2,6 @@
 #include "mysystem.hh"
 #include <iostream>
 
-#include "myrapidjson.h"
 
 template void
 JadeDataFrame::Serialize<rapidjson::PrettyWriter<rapidjson::StringBuffer>>
@@ -18,10 +17,36 @@ JadeDataFrame::JadeDataFrame(std::string&& data)
   Decode(4);
 }
 
-JadeDataFrame::JadeDataFrame(std::string& data)
+JadeDataFrame::JadeDataFrame(const std::string& data)
   : m_data_raw(data)
 {
   Decode(4);
+}
+
+// static const JadeDataFrame::s_version=2;
+JadeDataFrame::JadeDataFrame(const rapidjson::Value &js){
+  if(js["ver"].GetUint64()!=s_version){
+    std::fprintf(stderr, "mismathed data writer/reader versions");
+    throw;
+  }
+  
+  m_trigger   = js["tri"].GetUint64();
+  m_counter   = js["cnt"].GetUint64();
+  m_extension = js["ext"].GetUint64();
+    
+  const auto &js_chs = js["hit"].GetArray();
+  for(const auto &js_ch : js_chs){
+    std::vector<PixelHit> pixelhits;
+    const auto &js_phs = js_ch.GetArray();
+    for(const auto &js_ph : js_phs){
+      const auto &js_pos = js_ph.GetArray();
+      pixelhits.emplace_back(js_pos[0].GetUint(),
+                             js_pos[1].GetUint(),
+                             js_pos[2].GetUint());
+    }
+    ClusterHit clusterhit(std::move(pixelhits));
+    m_clusters.push_back(std::move(clusterhit));
+  }
 }
 
 
@@ -44,7 +69,6 @@ uint64_t JadeDataFrame::GetExtension()
 {
   return m_extension;
 }
-
 
 void JadeDataFrame::Decode(uint32_t level){
   if(level <= m_level_decode)
@@ -77,13 +101,15 @@ void JadeDataFrame::Decode(uint32_t level){
   m_counter = BE16TOH(*reinterpret_cast<const uint16_t*>(p_raw));
   m_trigger = m_counter;
   p_raw += 2;
-  m_n_x = 1024;
-  m_n_y = 512;
+  // m_n_x = 1024;
+  // m_n_y = 512;
 
   if(level<2){
     m_level_decode = level;
     return;
   }
+
+  ClusterPool pool;
   
   uint8_t l_frame_n = -1;
   uint8_t l_region_id = -1;
@@ -151,9 +177,11 @@ void JadeDataFrame::Decode(uint32_t level){
 
           uint16_t y = addr>>1;
           uint16_t x = (l_region_id<<5)+(encoder_id<<1)+((addr&0b1)!=((addr>>1)&0b1));
-          m_data_x.push_back(x);
-          m_data_y.push_back(y);
-          m_data_d.push_back(m_extension);
+
+          pool.addHit(x, y, m_extension);
+          // m_data_x.push_back(x);
+          // m_data_y.push_back(y);
+          // m_data_d.push_back(m_extension);
         }
         else{
           p_raw++;
@@ -175,17 +203,20 @@ void JadeDataFrame::Decode(uint32_t level){
         uint16_t y = addr>>1;
         uint16_t x = (l_region_id<<5)+(encoder_id<<1)+((addr&0b1)!=((addr>>1)&0b1));
  
-        m_data_x.push_back(x);
-        m_data_y.push_back(y);
-        m_data_d.push_back(m_extension);
+        // m_data_x.push_back(x);
+        // m_data_y.push_back(y);
+        // m_data_d.push_back(m_extension);
+        pool.addHit(x, y, m_extension);
+
         for(int i=1; i<=7; i++){
           if(hit_map & (1<<(i-1))){
 	    uint16_t addr_l = addr + i;
             uint16_t y = addr_l>>1;
             uint16_t x = (l_region_id<<5)+(encoder_id<<1)+((addr_l&0b1)!=((addr_l>>1)&0b1));
-            m_data_x.push_back(x);
-            m_data_y.push_back(y);
-            m_data_d.push_back(m_extension);
+            // m_data_x.push_back(x);
+            // m_data_y.push_back(y);
+            // m_data_d.push_back(m_extension);
+            pool.addHit(x, y, m_extension);
           }
         }
       }
@@ -197,7 +228,11 @@ void JadeDataFrame::Decode(uint32_t level){
       continue;
     }
   }
-  m_n_d = l_frame_n+1;
+  
+  pool.buildClusters();
+  m_clusters = std::move(pool.m_clusters);
+  
+  // m_n_d = l_frame_n+1;
   m_level_decode = level;
   return;
 }

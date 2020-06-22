@@ -383,17 +383,13 @@ uint64_t async_gl_loop(Telescope *ptel, bool *pflag_gl_running){
     auto ev_col =tel.ReadEvent_Lastcopy();
     if(ev_col.empty())
       continue;
-        
+    
     for(auto& e: ev_col){
-      auto it_x = e->Data_X().begin();
-      auto it_y = e->Data_Y().begin();
-      auto it_z = e->Data_D().begin();
-      auto it_x_end = e->Data_X().end();
-      while(it_x!=it_x_end){
-        telgl.addHit(*it_x, *it_y, *it_z);
-        it_x ++;
-        it_y ++;
-        it_z ++;
+      for(auto &chit : e->m_clusters){
+        //only get first pixel hit from each cluster hit 
+        telgl.addHit(chit.pixelHits[0].x(),
+                     chit.pixelHits[0].y(),
+                     chit.pixelHits[0].z());
       }
     }
     
@@ -408,3 +404,4 @@ uint64_t async_gl_loop(Telescope *ptel, bool *pflag_gl_running){
 
   return n_gl_frame;
 }
+
