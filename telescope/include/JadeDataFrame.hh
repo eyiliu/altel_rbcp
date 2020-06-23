@@ -36,8 +36,52 @@ public:
   uint32_t GetMatrixSizeY() const;
   uint64_t GetCounter();
   uint64_t GetExtension();
+
+  template <typename Allocator>
+  rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> JSON(Allocator &a) const{
+    rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> js;
+    js.SetObject();
+    js.AddMember("det", "alptel", a);
+    js.AddMember("ver",  rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(s_version), a);
+    js.AddMember("tri",  rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(m_trigger), a);
+    js.AddMember("cnt",  rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(m_counter), a);
+    js.AddMember("ext",  rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(m_extension), a);
+
+    rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> js_cluster_hits;
+    js_cluster_hits.SetArray();
+    for(auto &ch : m_clusters){
+      rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> js_cluster_hit;
+      js_cluster_hit.SetObject();
+
+      rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> js_cluster_hit_pos;
+      js_cluster_hit_pos.SetArray();
+      js_cluster_hit_pos.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ch.x()), a);
+      js_cluster_hit_pos.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ch.y()), a);
+      js_cluster_hit_pos.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ch.z()), a);
+      js_cluster_hit.AddMember("pos", std::move(js_cluster_hit_pos), a);
+      
+      rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> js_pixel_hits;
+      js_pixel_hits.SetArray();
+      for(auto &ph : ch.pixelHits){
+        rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> js_pixel_hit_pos;
+        js_pixel_hit_pos.SetArray();
+        js_pixel_hit_pos.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ph.x()), a);
+        js_pixel_hit_pos.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ph.y()), a);
+        js_pixel_hit_pos.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ph.z()), a);
+        js_pixel_hits.PushBack(std::move(js_pixel_hit_pos), a);
+      }
+      js_cluster_hit.AddMember("pix", std::move(js_pixel_hits), a);
+      
+      js_cluster_hits.PushBack(std::move(js_cluster_hit), a);
+    }
+    js.AddMember("hit", std::move(js_cluster_hits) , a);
     
-  rapidjson::Value JSON( rapidjson::MemoryPoolAllocator<> &a) const;
+    //https://rapidjson.org/classrapidjson_1_1_generic_object.html
+    //https://rapidjson.org/md_doc_tutorial.html#CreateModifyValues
+    return js;
+  };
+  
+  
   void Print(std::ostream& os, size_t ws = 0) const;
   
   template <typename W>

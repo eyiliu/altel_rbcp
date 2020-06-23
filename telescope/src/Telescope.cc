@@ -305,8 +305,8 @@ Telescope::Telescope(const std::string& file_context){
   const auto& js_testbeam   = js_obj["testbeam"];
   const auto& js_layers     = js_obj["layers"];
 
-  m_js_telescope.CopyFrom(js_telescope, m_jsa);
-  m_js_testbeam.CopyFrom(js_testbeam, m_jsa);
+  m_js_telescope.CopyFrom(js_telescope, m_jsa_pool);
+  m_js_testbeam.CopyFrom(js_testbeam, m_jsa_pool);
   
   std::map<std::string, double> layer_loc;
   std::multimap<double, std::string> loc_layer;
@@ -476,7 +476,7 @@ uint64_t Telescope::AsyncRead(){
   FILE* fd = fopen(data_path.c_str(), "wb");
   rapidjson::StringBuffer js_sb;
   rapidjson::Writer<rapidjson::StringBuffer> js_writer;
-  
+  js_writer.SetMaxDecimalPlaces(5);
   uint64_t n_ev = 0;
   m_is_async_reading = true;
   while (m_is_async_reading){
@@ -502,11 +502,13 @@ uint64_t Telescope::AsyncRead(){
     m_js_testbeam.Accept(js_writer);
     js_writer.String("telescope");
     m_js_telescope.Accept(js_writer);
-    rapidjson::PutN(js_sb, '\n', 1);
     js_writer.String("layers");
+    rapidjson::PutN(js_sb, '\n', 1);
     js_writer.StartArray();
     for(auto& e: ev){
-      e->Serialize(js_writer);
+      // e->Serialize(js_writer);
+      auto js_e = e->JSON(m_jsa);
+      js_e.Accept(js_writer);
       rapidjson::PutN(js_sb, '\n', 1);
     }
     js_writer.EndArray();

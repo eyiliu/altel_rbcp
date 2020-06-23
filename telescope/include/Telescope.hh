@@ -95,8 +95,10 @@ public:
   void Start_no_tel_reading();
   uint64_t AsyncRead();
   uint64_t AsyncWatchDog();
-
-  rapidjson::MemoryPoolAllocator<> m_jsa;
+  
+  rapidjson::CrtAllocator m_jsa_crt;
+  rapidjson::CrtAllocator m_jsa;
+  rapidjson::MemoryPoolAllocator<> m_jsa_pool;
   rapidjson::Value m_js_testbeam;
   rapidjson::Value m_js_telescope;
 };

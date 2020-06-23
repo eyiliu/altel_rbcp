@@ -404,4 +404,3 @@ uint64_t async_gl_loop(Telescope *ptel, bool *pflag_gl_running){
 
   return n_gl_frame;
 }
-

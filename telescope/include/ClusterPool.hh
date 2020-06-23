@@ -38,6 +38,9 @@ struct PixelHit{
 struct ClusterHit{
   double   centerX{0};
   double   centerY{0};
+  double   resulotionX{0};
+  double   resolutionY{0};
+
   uint16_t surfIndex{0};
   uint16_t pixelSize{0};
   std::vector<PixelHit> pixelHits;
@@ -68,8 +71,8 @@ struct ClusterHit{
       centerY+= ph.y();
       surfIndex = ph.z();
     }
-    centerX *= 29.24;
-    centerY *= 26.88;
+    centerX *= 0.02924;
+    centerY *= 0.02688;
     centerX /= pixelSize;
     centerY /= pixelSize;
   }
