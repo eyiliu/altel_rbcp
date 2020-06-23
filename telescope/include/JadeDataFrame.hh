@@ -55,6 +55,7 @@ public:
 
       rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> js_cluster_hit_pos;
       js_cluster_hit_pos.SetArray();
+      // must enable  RAPIDJSON_HAS_CXX11_RVALUE_REFS 1
       js_cluster_hit_pos.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ch.x()), a);
       js_cluster_hit_pos.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ch.y()), a);
       js_cluster_hit_pos.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ch.z()), a);

@@ -478,6 +478,7 @@ uint64_t Telescope::AsyncRead(){
   rapidjson::Writer<rapidjson::StringBuffer> js_writer;
   js_writer.SetMaxDecimalPlaces(5);
   uint64_t n_ev = 0;
+  m_flag_next_event_add_conf = true;
   m_is_async_reading = true;
   while (m_is_async_reading){
     auto ev = ReadEvent();
@@ -496,17 +497,20 @@ uint64_t Telescope::AsyncRead(){
     else{
       std::fwrite(reinterpret_cast<const char *>(",\n"), 1, 2, fd);
     }
+    
     js_writer.Reset(js_sb);
-    js_writer.StartObject();
-    js_writer.String("testbeam");
-    m_js_testbeam.Accept(js_writer);
-    js_writer.String("telescope");
-    m_js_telescope.Accept(js_writer);
+    if(m_flag_next_event_add_conf){
+      js_writer.StartObject();
+      js_writer.String("testbeam");
+      m_js_testbeam.Accept(js_writer);
+      js_writer.String("telescope");
+      m_js_telescope.Accept(js_writer);
+      m_flag_next_event_add_conf = false;
+    }
     js_writer.String("layers");
     rapidjson::PutN(js_sb, '\n', 1);
     js_writer.StartArray();
     for(auto& e: ev){
-      // e->Serialize(js_writer);
       auto js_e = e->JSON(m_jsa);
       js_e.Accept(js_writer);
       rapidjson::PutN(js_sb, '\n', 1);
@@ -533,7 +537,9 @@ uint64_t Telescope::AsyncWatchDog(){
       std::cout<< l->GetStatusString();
     }
     uint64_t st_n_ev = m_st_n_ev;
-    std::fprintf(stdout, "Tele: event(%u)\n\n", st_n_ev);
+    //TODO: make a json object to keep status;
+    std::fprintf(stdout, "Tele: disk saved events(%u) \n\n", st_n_ev);
+    m_flag_next_event_add_conf = true;
   }
   //sleep and watch running time status;
   return 0;

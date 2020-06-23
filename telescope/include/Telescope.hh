@@ -94,8 +94,9 @@ public:
   void Stop();
   void Start_no_tel_reading();
   uint64_t AsyncRead();
-  uint64_t AsyncWatchDog();
-  
+  uint64_t AsyncWatchDog();  
+
+  bool m_flag_next_event_add_conf{true};
   rapidjson::CrtAllocator m_jsa_crt;
   rapidjson::CrtAllocator m_jsa;
   rapidjson::MemoryPoolAllocator<> m_jsa_pool;
