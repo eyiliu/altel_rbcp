@@ -9,6 +9,7 @@
 #include "FirmwarePortal.hh"
 #include "AltelReader.hh"
 
+#include "myrapidjson.h"
 
 class Layer{
 public:
@@ -94,7 +95,10 @@ public:
   void Start_no_tel_reading();
   uint64_t AsyncRead();
   uint64_t AsyncWatchDog();
-  
+
+  rapidjson::MemoryPoolAllocator<> m_jsa;
+  rapidjson::Value m_js_testbeam;
+  rapidjson::Value m_js_telescope;
 };
 
 #endif

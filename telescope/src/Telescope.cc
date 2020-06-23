@@ -78,7 +78,7 @@ void Layer::fw_init(){
   // RORST 
   // m_fw->SendAlpideBroadcast("RORST"); //Readout (RRU/TRU/DMU) reset, commit token
   //===========end of init part =====================
-
+  
   std::fprintf(stdout, " fw init  %s\n", m_fw->DeviceUrl().c_str());
 }
 
@@ -281,20 +281,69 @@ Telescope::Telescope(const std::string& file_context){
   rapidjson::Document js_doc;
   js_doc.Parse(file_context.c_str());
   if(js_doc.HasParseError()){
-    fprintf(stderr, "JSON parse error: %s (at string positon %u)", rapidjson::GetParseError_En(js_doc.GetParseError()), js_doc.GetErrorOffset());
+    fprintf(stderr, "JSON parse error: %s (at string positon %u) \n", rapidjson::GetParseError_En(js_doc.GetParseError()), js_doc.GetErrorOffset());
+    throw;
+  }
+  const auto &js_obj = js_doc.GetObject();
+  
+  if(!js_obj.HasMember("telescope")){
+    fprintf(stderr, "JSON configure file error: no \"telescope\" section \n");
+    throw;
+  }
+  
+  if(!js_obj.HasMember("testbeam")){
+    fprintf(stderr, "JSON configure file error: no \"testbeam\" section \n");
     throw;
   }
 
-  for (auto& js_layer : js_doc.GetArray()){
-    if(js_layer.HasMember("disable") && js_layer["disable"].GetBool()){
-      continue;
+  if(!js_obj.HasMember("layers")){
+    fprintf(stderr, "JSON configure file error: no \"layers\" section \n");
+    throw;
+  }
+  
+  const auto& js_telescope  = js_obj["telescope"];
+  const auto& js_testbeam   = js_obj["testbeam"];
+  const auto& js_layers     = js_obj["layers"];
+
+  m_js_telescope.CopyFrom(js_telescope, m_jsa);
+  m_js_testbeam.CopyFrom(js_testbeam, m_jsa);
+  
+  std::map<std::string, double> layer_loc;
+  std::multimap<double, std::string> loc_layer;
+ 
+  if(!js_telescope.HasMember("locations")){
+    fprintf(stderr, "JSON configure file error: no \"location\" section \n");
+    throw;
+  }
+
+  // throw;
+  for(const auto& l: js_telescope["locations"].GetObject()){
+    std::string name = l.name.GetString();
+    double loc = l.value.GetDouble();
+    layer_loc[name] = loc;
+    loc_layer.insert(std::pair<double, std::string>(loc, name));
+  }
+  
+  for(const auto& l: loc_layer){
+    std::string layer_name = l.second;
+    bool layer_found = false;
+    for (const auto& js_layer : js_layers.GetArray()){
+      if(js_layer.HasMember("name") && js_layer["name"]==layer_name){
+        std::unique_ptr<FirmwarePortal> fw(new FirmwarePortal(FirmwarePortal::Stringify(js_layer["ctrl_link"])));
+        std::unique_ptr<AltelReader> rd(new AltelReader(FirmwarePortal::Stringify(js_layer["data_link"])));
+        std::unique_ptr<Layer> l(new Layer);
+        l->m_fw.reset(new FirmwarePortal(FirmwarePortal::Stringify(js_layer["ctrl_link"])));
+        l->m_rd.reset(new AltelReader(FirmwarePortal::Stringify(js_layer["data_link"])));
+        m_vec_layer.push_back(std::move(l));
+        layer_found = true;
+        break;
+      }
     }
-    std::unique_ptr<FirmwarePortal> fw(new FirmwarePortal(FirmwarePortal::Stringify(js_layer["ctrl_link"])));
-    std::unique_ptr<AltelReader> rd(new AltelReader(FirmwarePortal::Stringify(js_layer["data_link"])));
-    std::unique_ptr<Layer> l(new Layer);
-    l->m_fw.reset(new FirmwarePortal(FirmwarePortal::Stringify(js_layer["ctrl_link"])));
-    l->m_rd.reset(new AltelReader(FirmwarePortal::Stringify(js_layer["data_link"])));
-    m_vec_layer.push_back(std::move(l));
+    if(!layer_found){
+      std::fprintf(stderr, "Layer %6s: is not found in configure file \n", layer_name.c_str());
+      throw;
+    }
+    std::fprintf(stdout, "Layer %6s:     at location Z = %8.2f\n", layer_name.c_str(), l.first);
   }
 }
 
@@ -338,12 +387,10 @@ std::vector<JadeDataFrameSP> Telescope::ReadEvent(){
     std::vector<JadeDataFrameSP> empty;
     return empty;
   }
-
   if(m_mon_ev_read == m_mon_ev_write){
     m_ev_last=ev_sync;
     m_mon_ev_write ++;
-  }
-  
+  }  
   return ev_sync;
 }
 
@@ -357,14 +404,11 @@ std::vector<JadeDataFrameSP> Telescope::ReadEvent_Lastcopy(){
     return m_ev_last_empty;
 }
 
-
-
 void Telescope::Init(){
   for(auto & l: m_vec_layer){
     l->fw_init();
   }
 }
-
 
 void Telescope::Start(){
   for(auto & l: m_vec_layer){
@@ -453,12 +497,20 @@ uint64_t Telescope::AsyncRead(){
       std::fwrite(reinterpret_cast<const char *>(",\n"), 1, 2, fd);
     }
     js_writer.Reset(js_sb);
+    js_writer.StartObject();
+    js_writer.String("testbeam");
+    m_js_testbeam.Accept(js_writer);
+    js_writer.String("telescope");
+    m_js_telescope.Accept(js_writer);
+    rapidjson::PutN(js_sb, '\n', 1);
+    js_writer.String("layers");
     js_writer.StartArray();
     for(auto& e: ev){
       e->Serialize(js_writer);
       rapidjson::PutN(js_sb, '\n', 1);
     }
     js_writer.EndArray();
+    js_writer.EndObject();
     rapidjson::PutN(js_sb, '\n', 1);
     auto p_ch = js_sb.GetString();
     auto n_ch = js_sb.GetSize();

@@ -1,140 +1,212 @@
-[
-    {
-        "disable_":true,
-        "data_link":{
-            "protocol":"tcp",
-            "version": 1,
-            "description":"ALPIDE plane TCP raw reader",
-            "options":{
-                "ip":"131.169.133.170",
-                "port":24
-            }
-        },
-        "ctrl_link":{
-            "protocol":"udp",
-            "version": 1,
-            "description":"ALPIDE plane UDP ctrl",
-            "options":{
-                "path":"jsonfile/reg_cmd_list.json",
-                "ip":"131.169.133.170",
-                "port":4660
-            }
-        }
-    },
+{
 
-    {
-        "disable_":true,
-        "data_link":{
-            "protocol":"tcp",
-            "version": 1,
-            "description":"ALPIDE plane TCP raw reader",
-            "options":{
-                "ip":"131.169.133.171",
-                "port":24
-            }
-        },
-        "ctrl_link":{
-            "protocol":"udp",
-            "version": 1,
-            "description":"ALPIDE plane UDP ctrl",
-            "options":{
-                "path":"jsonfile/reg_cmd_list.json",
-                "ip":"131.169.133.171",
-                "port":4660
-            }
-        }
+    "testbeam":{
+        "energy":6
     },
-
-    {
-        "disable_":true,
-        "data_link":{
-            "protocol":"tcp",
-            "version": 1,
-            "description":"ALPIDE plane TCP raw reader",
-            "options":{
-                "ip":"131.169.133.172",
-                "port":24
-            }
-        },
-        "ctrl_link":{
-            "protocol":"udp",
-            "version": 1,
-            "description":"ALPIDE plane UDP ctrl",
-            "options":{
-                "path":"jsonfile/reg_cmd_list.json",
-                "ip":"131.169.133.172",
-                "port":4660
-            }
-        }
-    },
-
-    {
-        "disable_":true,
-        "data_link":{
-            "protocol":"tcp",
-            "version": 1,
-            "description":"ALPIDE plane TCP raw reader",
-            "options":{
-                "ip":"131.169.133.173",
-                "port":24
-            }
-        },
-        "ctrl_link":{
-            "protocol":"udp",
-            "version": 1,
-            "description":"ALPIDE plane UDP ctrl",
-            "options":{
-                "path":"jsonfile/reg_cmd_list.json",
-                "ip":"131.169.133.173",
-                "port":4660
-            }
-        }
-    },
-
-    {
-        "disable_":true,
-        "data_link":{
-            "protocol":"tcp",
-            "version": 1,
-            "description":"ALPIDE plane TCP raw reader",
-            "options":{
-                "ip":"131.169.133.174",
-                "port":24
-            }
-        },
-        "ctrl_link":{
-            "protocol":"udp",
-            "version": 1,
-            "description":"ALPIDE plane UDP ctrl",
-            "options":{
-                "path":"jsonfile/reg_cmd_list.json",
-                "ip":"131.169.133.174",
-                "port":4660
-            }
+    
+    "telescope":{
+        "locations":{
+            "red":  0,
+            "orange": 38,
+            "yellow": 76,
+            "green":  114,
+            "cyan":   152,
+            "blue":   190,
+            "purple": 220
         }
     },
     
-    {
-        "disable_":true,
-        "data_link":{
-            "protocol":"tcp",
-            "version": 1,
-            "description":"ALPIDE plane TCP raw reader",
-            "options":{
-                "ip":"131.169.133.175",
-                "port":24
+    "layers":[
+        {
+            "name":"red",
+            "data_link":{
+                "protocol":"tcp",
+                "version": 1,
+                "description":"ALPIDE plane TCP raw reader",
+                "options":{
+                    "ip":"131.169.133.170",
+                    "port":24
+                }
+            },
+            "ctrl_link":{
+                "protocol":"udp",
+                "version": 1,
+                "description":"ALPIDE plane UDP ctrl",
+                "options":{
+                    "path":"jsonfile/reg_cmd_list.json",
+                    "ip":"131.169.133.170",
+                    "port":4660
+                }
+            },
+            "config":{
+                "hotmask":[],
+                "firmware":{},
+                "sensor":{"VCASN":57, "VCASN2":69, "ITHR":51}
             }
         },
-        "ctrl_link":{
-            "protocol":"udp",
-            "version": 1,
-            "description":"ALPIDE plane UDP ctrl",
-            "options":{
-                "path":"jsonfile/reg_cmd_list.json",
-                "ip":"131.169.133.175",
-                "port":4660
+
+        {
+            "name":"orange",
+            "data_link":{
+                "protocol":"tcp",
+                "version": 1,
+                "description":"ALPIDE plane TCP raw reader",
+                "options":{
+                    "ip":"131.169.133.171",
+                    "port":24
+                }
+            },
+            "ctrl_link":{
+                "protocol":"udp",
+                "version": 1,
+                "description":"ALPIDE plane UDP ctrl",
+                "options":{
+                    "path":"jsonfile/reg_cmd_list.json",
+                    "ip":"131.169.133.171",
+                    "port":4660
+                }
+            },
+            "config":{
+                "hotmask":[],
+                "firmware":{},
+                "sensor":{"VCASN":57, "VCASN2":69, "ITHR":51}
+            }
+        },
+
+        {
+            "name":"yellow",
+            "data_link":{
+                "protocol":"tcp",
+                "version": 1,
+                "description":"ALPIDE plane TCP raw reader",
+                "options":{
+                    "ip":"131.169.133.172",
+                    "port":24
+                }
+            },
+            "ctrl_link":{
+                "protocol":"udp",
+                "version": 1,
+                "description":"ALPIDE plane UDP ctrl",
+                "options":{
+                    "path":"jsonfile/reg_cmd_list.json",
+                    "ip":"131.169.133.172",
+                    "port":4660
+                }
+            },
+            "config":{
+                "hotmask":[],
+                "firmware":{},
+                "sensor":{"VCASN":57, "VCASN2":69, "ITHR":51}
+            }
+        },
+
+        {
+            "name":"green",
+            "data_link":{
+                "protocol":"tcp",
+                "version": 1,
+                "description":"ALPIDE plane TCP raw reader",
+                "options":{
+                    "ip":"131.169.133.173",
+                    "port":24
+                }
+            },
+            "ctrl_link":{
+                "protocol":"udp",
+                "version": 1,
+                "description":"ALPIDE plane UDP ctrl",
+                "options":{
+                    "path":"jsonfile/reg_cmd_list.json",
+                    "ip":"131.169.133.173",
+                    "port":4660
+                }
+            },
+            "config":{
+                "hotmask":[],
+                "firmware":{},
+                "sensor":{"VCASN":57, "VCASN2":69, "ITHR":51}
+            }
+        },
+
+        {
+            "name":"cyan",
+            "data_link":{
+                "protocol":"tcp",
+                "version": 1,
+                "description":"ALPIDE plane TCP raw reader",
+                "options":{
+                    "ip":"131.169.133.174",
+                    "port":24
+                }
+            },
+            "ctrl_link":{
+                "protocol":"udp",
+                "version": 1,
+                "description":"ALPIDE plane UDP ctrl",
+                "options":{
+                    "path":"jsonfile/reg_cmd_list.json",
+                    "ip":"131.169.133.174",
+                    "port":4660
+                }
+            }
+        },
+        
+        {
+            "name":"blue",
+            "data_link":{
+                "protocol":"tcp",
+                "version": 1,
+                "description":"ALPIDE plane TCP raw reader",
+                "options":{
+                    "ip":"131.169.133.175",
+                    "port":24
+                }
+            },
+            "ctrl_link":{
+                "protocol":"udp",
+                "version": 1,
+                "description":"ALPIDE plane UDP ctrl",
+                "options":{
+                    "path":"jsonfile/reg_cmd_list.json",
+                    "ip":"131.169.133.175",
+                    "port":4660
+                }
+            },
+            "config":{
+                "hotmask":[],
+                "firmware":{},
+                "sensor":{"VCASN":57, "VCASN2":69, "ITHR":51}
+            }
+        },
+
+        {
+            "name":"purple",
+            "data_link":{
+                "protocol":"tcp",
+                "version": 1,
+                "description":"ALPIDE plane TCP raw reader",
+                "options":{
+                    "ip":"192.168.10.16",
+                    "port":24
+                }
+            },
+            "ctrl_link":{
+                "protocol":"udp",
+                "version": 1,
+                "description":"ALPIDE plane UDP ctrl",
+                "options":{
+                    "path":"jsonfile/reg_cmd_list.json",
+                    "ip":"192.168.10.16",
+                    "port":4660
+                }
+            },
+            "config":{
+                "hotmask":[],
+                "firmware":{},
+                "sensor":{"VCASN":57, "VCASN2":69, "ITHR":51}
             }
         }
-    }
-
-]
+        
+    ]
+}
