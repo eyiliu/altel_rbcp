@@ -59,6 +59,12 @@ public:
       js_cluster_hit_pos.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ch.y()), a);
       js_cluster_hit_pos.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ch.z()), a);
       js_cluster_hit.AddMember("pos", std::move(js_cluster_hit_pos), a);
+
+      rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> js_cluster_hit_res;
+      js_cluster_hit_res.SetArray();
+      js_cluster_hit_res.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ch.resX()), a);
+      js_cluster_hit_res.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ch.resY()), a);
+      js_cluster_hit.AddMember("res", std::move(js_cluster_hit_pos), a);
       
       rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> js_pixel_hits;
       js_pixel_hits.SetArray();
@@ -81,62 +87,8 @@ public:
     return js;
   };
   
-  
   void Print(std::ostream& os, size_t ws = 0) const;
   
-  template <typename W>
-  void Serialize(W& w) const {
-    w.StartObject();
-    {
-      w.String("det");
-      w.String("altel");
-      
-      w.String("ver");
-      w.Uint(s_version);
-      
-      w.String("tri");
-      w.Uint(m_trigger);
-      
-      w.String("cnt");
-      w.Uint(m_counter);
-      
-      w.String("ext");
-      w.Uint(m_extension);
-      
-      w.String("hit");
-      w.StartArray();
-      for(auto &ch : m_clusters){
-        w.StartObject();
-        {
-          w.String("pos");
-          w.StartArray();
-          {
-            w.Double(ch.x());
-            w.Double(ch.y());
-            w.Uint(ch.z());
-          }
-          w.EndArray();
-        
-          w.String("pix");
-          w.StartArray();
-          for(auto &ph : ch.pixelHits){
-            w.StartArray();
-            {
-              w.Uint(ph.x());
-              w.Uint(ph.y());
-              w.Uint(ph.z());
-            }
-            w.EndArray();
-          }
-          w.EndArray();
-        }
-        w.EndObject();
-      }
-      w.EndArray();
-    }
-    w.EndObject();
-  }  
-
   static const uint16_t s_version{3};
   std::string m_data_raw;
   uint16_t m_level_decode{0};

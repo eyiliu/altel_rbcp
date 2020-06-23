@@ -38,13 +38,13 @@ struct PixelHit{
 struct ClusterHit{
   double   centerX{0};
   double   centerY{0};
-  double   resulotionX{0};
+  double   resolutionX{0};
   double   resolutionY{0};
-
-  uint16_t surfIndex{0};
   uint16_t pixelSize{0};
+  uint16_t surfIndex{0};
+  
   std::vector<PixelHit> pixelHits;
-
+  
   ClusterHit(std::vector<PixelHit> &&hits)
     :pixelHits(std::move(hits))
   {
@@ -59,6 +59,9 @@ struct ClusterHit{
   inline const double& y() const{return centerY;}
   inline const uint16_t& z() const{return surfIndex;}
   inline const uint16_t& size() const{return pixelSize;}
+  inline const double& resX() const{return resolutionX;}
+  inline const double& resY() const{return resolutionY;}
+
   
   void buildClusterCenter(){
     if(pixelSize)

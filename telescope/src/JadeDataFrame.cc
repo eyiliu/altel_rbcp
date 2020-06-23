@@ -2,15 +2,6 @@
 #include "mysystem.hh"
 #include <iostream>
 
-
-template void
-JadeDataFrame::Serialize<rapidjson::PrettyWriter<rapidjson::StringBuffer>>
-(rapidjson::PrettyWriter<rapidjson::StringBuffer>& ) const;
-
-template void
-JadeDataFrame::Serialize<rapidjson::Writer<rapidjson::StringBuffer>>
-(rapidjson::Writer<rapidjson::StringBuffer>& ) const;
-
 JadeDataFrame::JadeDataFrame(std::string&& data)
   : m_data_raw(std::move(data))
 {
@@ -28,7 +19,7 @@ JadeDataFrame::JadeDataFrame(const rapidjson::Value &js){
     std::fprintf(stderr, "mismathed data writer/reader versions");
     throw;
   }
-  
+
   m_trigger   = js["tri"].GetUint64();
   m_counter   = js["cnt"].GetUint64();
   m_extension = js["ext"].GetUint64();
@@ -36,7 +27,7 @@ JadeDataFrame::JadeDataFrame(const rapidjson::Value &js){
   const auto &js_chs = js["hit"].GetArray();
   for(const auto &js_ch : js_chs){
     std::vector<PixelHit> pixelhits;
-    const auto &js_phs = js_ch.GetArray();
+    const auto &js_phs = js_ch["pix"].GetArray();
     for(const auto &js_ph : js_phs){
       const auto &js_pos = js_ph.GetArray();
       pixelhits.emplace_back(js_pos[0].GetUint(),
@@ -237,10 +228,9 @@ void JadeDataFrame::Decode(uint32_t level){
 }
 
 void JadeDataFrame::Print(std::ostream& os, size_t ws) const
-{
-  rapidjson::OStreamWrapper js_osw(os);
-  rapidjson::Writer<rapidjson::OStreamWrapper> js_writer(js_osw);
-  Serialize(js_writer);
+{  
+  rapidjson::OStreamWrapper osw(os);
+  rapidjson::Writer<rapidjson::OStreamWrapper> writer(osw);
+  rapidjson::CrtAllocator allo;
+  JSON(allo).Accept(writer);
 }
-
-
