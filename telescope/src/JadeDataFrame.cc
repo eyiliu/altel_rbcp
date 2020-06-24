@@ -15,30 +15,15 @@ JadeDataFrame::JadeDataFrame(const std::string& data)
 }
 
 JadeDataFrame::JadeDataFrame(const rapidjson::Value &js){
-  if(js["ver"].GetUint64()!=s_version){
-    std::fprintf(stderr, "mismathed data writer/reader versions");
-    throw;
-  }
-
-  m_trigger   = js["tri"].GetUint64();
-  m_counter   = js["cnt"].GetUint64();
-  m_extension = js["ext"].GetUint64();
-    
-  const auto &js_chs = js["hit"].GetArray();
-  for(const auto &js_ch : js_chs){
-    std::vector<PixelHit> pixelhits;
-    const auto &js_phs = js_ch["pix"].GetArray();
-    for(const auto &js_ph : js_phs){
-      const auto &js_pos = js_ph.GetArray();
-      pixelhits.emplace_back(js_pos[0].GetUint(),
-                             js_pos[1].GetUint(),
-                             js_pos[2].GetUint());
-    }
-    ClusterHit clusterhit(std::move(pixelhits));
-    m_clusters.push_back(std::move(clusterhit));
-  }
+  fromJSON<>(js);
 }
 
+
+JadeDataFrame::JadeDataFrame(const rapidjson::GenericValue<
+                             rapidjson::UTF8<>,
+                             rapidjson::CrtAllocator> &js){
+  fromJSON<rapidjson::CrtAllocator>(js);
+}
 
 const std::string& JadeDataFrame::Raw() const
 {

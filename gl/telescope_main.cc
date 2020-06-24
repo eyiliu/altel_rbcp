@@ -348,12 +348,13 @@ uint64_t async_gl_loop(Telescope *ptel, bool *pflag_gl_running){
   flag_gl_running = true;
   
   TelescopeGL telgl;
-  telgl.addTelLayer(0, 0, 0,   1, 0, 0, 0.028, 0.026, 1.0, 1024, 512);
-  telgl.addTelLayer(0, 0, 30,  0, 1, 0, 0.028, 0.026, 1.0, 1024, 512);
-  telgl.addTelLayer(0, 0, 60,  0, 0, 1, 0.028, 0.026, 1.0, 1024, 512);
-  telgl.addTelLayer(0, 0, 120, 0.5, 0.5, 0, 0.028, 0.026, 1.0, 1024, 512);
-  telgl.addTelLayer(0, 0, 150, 0, 1, 1, 0.028, 0.026, 1.0, 1024, 512);
-  telgl.addTelLayer(0, 0, 180, 1, 0, 1, 0.028, 0.026, 1.0, 1024, 512);
+  telgl.addTelLayer(0, 0, 0,   1, 0, 0,      0.028, 0.026, 1.0, 1024, 512);
+  telgl.addTelLayer(0, 0, 30,  0, 1, 0,      0.028, 0.026, 1.0, 1024, 512);
+  telgl.addTelLayer(0, 0, 60,  0, 0, 1,      0.028, 0.026, 1.0, 1024, 512);
+  telgl.addTelLayer(0, 0, 120, 0.5, 0.5, 0,  0.028, 0.026, 1.0, 1024, 512);
+  telgl.addTelLayer(0, 0, 150, 0, 1, 1,      0.028, 0.026, 1.0, 1024, 512);
+  telgl.addTelLayer(0, 0, 180, 1, 0, 1,      0.028, 0.026, 1.0, 1024, 512);
+  telgl.addTelLayer(0, 0, 240, 0.5, 0, 0.5,  0.028, 0.026, 1.0, 1024, 512);
   telgl.buildProgramTel();
   telgl.buildProgramHit();
 

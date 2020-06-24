@@ -1,7 +1,7 @@
 {
 
     "testbeam":{
-        "energy":6
+        "energy":4
     },
     
     "telescope":{
@@ -12,7 +12,7 @@
             "green":  114,
             "cyan":   152,
             "blue":   190,
-            "purple": 220
+            "purple": 490
         }
     },
     

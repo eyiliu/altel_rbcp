@@ -18,6 +18,8 @@ public:
   JadeDataFrame(const std::string& raw);
   JadeDataFrame(std::string&& raw);
   JadeDataFrame(const rapidjson::Value &js);
+  JadeDataFrame(const rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> &js);
+
   JadeDataFrame() = delete;  
   
   void Decode(uint32_t level);
@@ -87,6 +89,34 @@ public:
     //https://rapidjson.org/md_doc_tutorial.html#CreateModifyValues
     return js;
   };
+  
+  template <typename Allocator>
+  void fromJSON(const rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> &js){
+    if(js["ver"].GetUint64()!=s_version){
+      std::fprintf(stderr, "mismathed data writer/reader versions");
+      throw;
+    }
+
+    m_trigger   = js["tri"].GetUint64();
+    m_counter   = js["cnt"].GetUint64();
+    m_extension = js["ext"].GetUint64();
+    
+    const auto &js_chs = js["hit"].GetArray();
+    for(const auto &js_ch : js_chs){
+      std::vector<PixelHit> pixelhits;
+      const auto &js_phs = js_ch["pix"].GetArray();
+      for(const auto &js_ph : js_phs){
+        const auto &js_pos = js_ph.GetArray();
+        pixelhits.emplace_back(js_pos[0].GetUint(),
+                               js_pos[1].GetUint(),
+                               js_pos[2].GetUint());
+      }
+      ClusterHit clusterhit(std::move(pixelhits));
+      clusterhit.buildClusterCenter();
+      m_clusters.push_back(std::move(clusterhit));
+    }
+    m_level_decode = 5;
+  }
   
   void Print(std::ostream& os, size_t ws = 0) const;
   
