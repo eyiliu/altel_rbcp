@@ -11,6 +11,7 @@
 class AltelReader{
 public:
   ~AltelReader();
+  AltelReader(const rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> &js);
   AltelReader(const std::string &json_string);
   JadeDataFrameSP Read(const std::chrono::milliseconds &timeout);
   std::vector<JadeDataFrameSP> Read(size_t size_max_pkg,
@@ -28,6 +29,9 @@ private:
   std::string m_file_path;
   bool m_file_terminate_eof{false};
   bool m_flag_file{false};
+
+  rapidjson::CrtAllocator m_jsa;
+  rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> m_js_conf;  
 };
 
 #endif

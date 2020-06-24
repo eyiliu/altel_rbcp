@@ -22,7 +22,8 @@ class FirmwarePortal{
 public:
   FirmwarePortal(const std::string &json_str, const std::string &ipaddr);
   FirmwarePortal(const std::string &json_str_options);
-
+  FirmwarePortal(const rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> &js);
+  
   void SetFirmwareRegister(const std::string& name, uint64_t value);
   void SendFirmwareCommand(const std::string& name);
   uint64_t GetFirmwareRegister(const std::string& name);
@@ -53,7 +54,6 @@ private:
   void  WriteByte(uint64_t address, uint64_t value);
   uint64_t ReadByte(uint64_t address);
   
-  rapidjson::Document m_json;
   std::string m_alpide_ip_addr;
 
 public:
@@ -104,6 +104,10 @@ public:
     std::fwrite(sb.GetString(), 1, sb.GetSize(), stdout);
   }
 
+  rapidjson::CrtAllocator m_jsa;
+  rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> m_js_conf;
+  rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> m_js_reg_cmd;  
+  rapidjson::Document m_json;
 };
 
 

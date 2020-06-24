@@ -14,6 +14,7 @@ target_link_libraries(mycommon INTERFACE
   getopt
   rapidjson
   Threads::Threads
+  ${CMAKE_DL_LIBS} #dl not sure if it works with full static
   gte
   )
 

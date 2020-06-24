@@ -6,6 +6,36 @@ using namespace std::chrono_literals;
 
 void Layer::fw_start(){
   if(!m_fw) return;
+
+  if(!m_js_conf.HasMember("hotmask")){
+    fprintf(stderr, "JSON configure file error: no hotmask section \n");
+    throw;
+  }
+  const auto& js_hotmask =  m_js_conf["hotmask"];
+  for(const auto &hot: js_hotmask.GetArray()){
+    uint64_t  x = hot[0].GetUint64();
+    uint64_t  y = hot[1].GetUint64();
+    m_fw->SetPixelRegister(x, y, "MASK_EN", true);
+  }
+  
+  if(!m_js_conf.HasMember("firmware")){
+    fprintf(stderr, "JSON configure file error: no firmware section \n");
+    throw;
+  }
+  const auto& js_fw_conf =  m_js_conf["firmware"];
+  for(const auto &reg: js_fw_conf.GetObject()){
+    m_fw->SetFirmwareRegister(reg.name.GetString(), reg.value.GetUint64());
+  }
+
+  if(!m_js_conf.HasMember("sensor")){
+    fprintf(stderr, "JSON configure file error: no sensor section \n");
+    throw;
+  }
+  const auto& js_sn_conf =  m_js_conf["sensor"];
+  for(const auto &reg: js_sn_conf.GetObject()){
+    m_fw->SetAlpideRegister(reg.name.GetString(), reg.value.GetUint64());
+  }
+  
   m_fw->SetAlpideRegister("CMU_DMU_CONF", 0x70);// token
   m_fw->SetAlpideRegister("CHIP_MODE", 0x3d); //trigger MODE
   m_fw->SendAlpideBroadcast("RORST"); //Readout (RRU/TRU/DMU) reset, commit token
@@ -19,6 +49,7 @@ void Layer::fw_stop(){
   m_fw->SetAlpideRegister("CHIP_MODE", 0x3c); // configure mode
   std::fprintf(stdout, " fw stop  %s\n", m_fw->DeviceUrl().c_str());
 }
+
 
 void Layer::fw_init(){
   if(!m_fw) return;
@@ -78,6 +109,13 @@ void Layer::fw_init(){
   // RORST 
   // m_fw->SendAlpideBroadcast("RORST"); //Readout (RRU/TRU/DMU) reset, commit token
   //===========end of init part =====================
+
+  //user init
+  //
+  //  
+
+  //
+  //end of user init
   
   std::fprintf(stdout, " fw init  %s\n", m_fw->DeviceUrl().c_str());
 }
@@ -89,7 +127,6 @@ void Layer::rd_start(){
   }
 
   m_fut_async_rd = std::async(std::launch::async, &Layer::AsyncPushBack, this);
-
   if(!m_is_async_watching){
     m_fut_async_watch = std::async(std::launch::async, &Layer::AsyncWatchDog, this);
   }
@@ -278,8 +315,9 @@ void Layer::ClearBuffer(){
 }
 
 Telescope::Telescope(const std::string& file_context){
-  rapidjson::Document js_doc;
-  js_doc.Parse(file_context.c_str());
+  rapidjson::GenericDocument<rapidjson::UTF8<char>, rapidjson::CrtAllocator>  js_doc;
+  js_doc.Parse(file_context);
+
   if(js_doc.HasParseError()){
     fprintf(stderr, "JSON parse error: %s (at string positon %u) \n", rapidjson::GetParseError_En(js_doc.GetParseError()), js_doc.GetErrorOffset());
     throw;
@@ -305,8 +343,8 @@ Telescope::Telescope(const std::string& file_context){
   const auto& js_testbeam   = js_obj["testbeam"];
   const auto& js_layers     = js_obj["layers"];
 
-  m_js_telescope.CopyFrom(js_telescope, m_jsa_pool);
-  m_js_testbeam.CopyFrom(js_testbeam, m_jsa_pool);
+  m_js_telescope.CopyFrom<rapidjson::CrtAllocator>(js_telescope, m_jsa);
+  m_js_testbeam.CopyFrom<rapidjson::CrtAllocator>(js_testbeam, m_jsa);
   
   std::map<std::string, double> layer_loc;
   std::multimap<double, std::string> loc_layer;
@@ -329,11 +367,12 @@ Telescope::Telescope(const std::string& file_context){
     bool layer_found = false;
     for (const auto& js_layer : js_layers.GetArray()){
       if(js_layer.HasMember("name") && js_layer["name"]==layer_name){
-        std::unique_ptr<FirmwarePortal> fw(new FirmwarePortal(FirmwarePortal::Stringify(js_layer["ctrl_link"])));
-        std::unique_ptr<AltelReader> rd(new AltelReader(FirmwarePortal::Stringify(js_layer["data_link"])));
+        // std::unique_ptr<FirmwarePortal> fw(new FirmwarePortal(FirmwarePortal::Stringify(js_layer["ctrl_link"])));
+        // std::unique_ptr<AltelReader> rd(new AltelReader(FirmwarePortal::Stringify(js_layer["data_link"])));
         std::unique_ptr<Layer> l(new Layer);
         l->m_fw.reset(new FirmwarePortal(FirmwarePortal::Stringify(js_layer["ctrl_link"])));
         l->m_rd.reset(new AltelReader(FirmwarePortal::Stringify(js_layer["data_link"])));
+        l->m_name=layer_name;
         m_vec_layer.push_back(std::move(l));
         layer_found = true;
         break;
@@ -344,6 +383,21 @@ Telescope::Telescope(const std::string& file_context){
       throw;
     }
     std::fprintf(stdout, "Layer %6s:     at location Z = %8.2f\n", layer_name.c_str(), l.first);
+  }
+
+  if(!m_js_telescope.HasMember("config")){
+      std::fprintf(stderr, "JSON configure file error: no telescope config \n");
+      throw;
+  }
+  
+  const auto& js_tele_conf = m_js_telescope["config"];
+  for(auto &l: m_vec_layer){
+    std::string name = l->m_name;
+    if(!js_tele_conf.HasMember(name)){
+      std::fprintf(stderr, "JSON configure file error: no config %s \n", name.c_str());
+      throw;
+    } 
+    l->m_js_conf.CopyFrom(js_tele_conf[name], l->m_jsa);
   }
 }
 
@@ -414,6 +468,7 @@ void Telescope::Start(){
   for(auto & l: m_vec_layer){
     l->rd_start();
   }
+  
   for(auto & l: m_vec_layer){
     l->fw_start();
   }
@@ -538,6 +593,7 @@ uint64_t Telescope::AsyncWatchDog(){
     }
     uint64_t st_n_ev = m_st_n_ev;
     //TODO: make a json object to keep status;
+    
     std::fprintf(stdout, "Tele: disk saved events(%u) \n\n", st_n_ev);
     m_flag_next_event_add_conf = true;
   }

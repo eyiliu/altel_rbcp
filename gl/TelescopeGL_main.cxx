@@ -189,7 +189,7 @@ public:
   bool m_is_async_thread_running{false};  
   std::future<uint64_t> m_fut_async_thread;
   
-  ~TelescopeViewer() virtual {
+  virtual ~TelescopeViewer(){
     stopAsyncThread();
   }
   

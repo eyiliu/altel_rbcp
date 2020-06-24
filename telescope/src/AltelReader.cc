@@ -24,21 +24,21 @@ AltelReader::~AltelReader(){
   Close();
 }
 
-
 AltelReader::AltelReader(const std::string& json_str)
 {
-  rapidjson::Document js_doc;
-  js_doc.Parse(json_str.c_str());
+  rapidjson::GenericDocument<rapidjson::UTF8<char>, rapidjson::CrtAllocator>  js_doc;
+  js_doc.Parse(json_str);
   if(js_doc.HasParseError()){
     fprintf(stderr, "JSON parse error: %s (at string positon %u)",
             rapidjson::GetParseError_En(js_doc.GetParseError()), js_doc.GetErrorOffset());
     throw;
   }
 
+  m_js_conf.CopyFrom<rapidjson::CrtAllocator>(js_doc, m_jsa);
   m_fd = 0;
   m_flag_file = false;
-  auto& js_proto = js_doc["protocol"];
-  auto& js_opt = js_doc["options"];
+  auto& js_proto = m_js_conf["protocol"];
+  auto& js_opt = m_js_conf["options"];
   if(js_proto == "tcp"){
     m_tcp_ip = js_opt["ip"].GetString();
     m_tcp_port = js_opt["port"].GetUint();
@@ -54,11 +54,32 @@ AltelReader::AltelReader(const std::string& json_str)
   }  
 }
 
+AltelReader::AltelReader(const rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> &js){
+  m_js_conf.CopyFrom<rapidjson::CrtAllocator>(js , m_jsa);
+
+  m_fd = 0;
+  m_flag_file = false;
+  auto& js_proto = m_js_conf["protocol"];
+  auto& js_opt = m_js_conf["options"];
+  if(js_proto == "tcp"){
+    m_tcp_ip = js_opt["ip"].GetString();
+    m_tcp_port = js_opt["port"].GetUint();
+  }
+  else if(js_proto == "file"){
+    m_file_path = js_opt["path"].GetString();
+    m_file_terminate_eof = js_opt["terminate_eof"].GetBool();
+    m_flag_file = true;
+  }
+  else{
+    fprintf(stderr, "Unknown reader protocol: %s", js_proto.GetString());
+    throw;
+  }  
+
+};
 
 const std::string& AltelReader::DeviceUrl(){
   return m_tcp_ip;
 }
-
 
 void AltelReader::Open(){
   if(m_flag_file){

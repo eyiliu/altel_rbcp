@@ -11,17 +11,17 @@ FirmwarePortal::FirmwarePortal(const std::string &json_str, const std::string &i
   }    
 }
 
-
 FirmwarePortal::FirmwarePortal(const std::string &json_str){
-  rapidjson::Document js_doc;
-  js_doc.Parse(json_str.c_str());
+  rapidjson::GenericDocument<rapidjson::UTF8<char>, rapidjson::CrtAllocator>  js_doc;
+  js_doc.Parse(json_str);
   if(js_doc.HasParseError()){
     fprintf(stderr, "JSON parse error: %s (at string positon %u)", rapidjson::GetParseError_En(js_doc.GetParseError()), js_doc.GetErrorOffset());
     throw;
   }
-
-  auto& js_proto = js_doc["protocol"];
-  auto& js_opt = js_doc["options"];
+  m_js_conf.CopyFrom<rapidjson::CrtAllocator>(js_doc, m_jsa);
+  
+  auto& js_proto = m_js_conf["protocol"];
+  auto& js_opt = m_js_conf["options"];
   std::string reg_file_path;
   if(js_proto == "udp"){
     m_alpide_ip_addr = js_opt["ip"].GetString();
@@ -32,8 +32,9 @@ FirmwarePortal::FirmwarePortal(const std::string &json_str){
       fprintf(stderr, "empty reg_file_path");
       throw;
   }
-  
+
   std::string reg_str = LoadFileToString(reg_file_path);
+  
   if(reg_str.empty()){
     fprintf(stderr, "empty reg_str");
     throw;
@@ -44,8 +45,39 @@ FirmwarePortal::FirmwarePortal(const std::string &json_str){
     fprintf(stderr, "JSON parse error: %s (at string positon %u)", rapidjson::GetParseError_En(m_json.GetParseError()), m_json.GetErrorOffset());
     throw;
   }
-
 }
+
+
+FirmwarePortal::FirmwarePortal(const rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> &js){
+  m_js_conf.CopyFrom<rapidjson::CrtAllocator>(js, m_jsa);
+  
+  auto& js_proto = m_js_conf["protocol"];
+  auto& js_opt = m_js_conf["options"];
+  std::string reg_file_path;
+  if(js_proto == "udp"){
+    m_alpide_ip_addr = js_opt["ip"].GetString();
+    reg_file_path = js_opt["path"].GetString();
+  }
+
+  if(reg_file_path.empty()){
+      fprintf(stderr, "empty reg_file_path");
+      throw;
+  }
+
+  std::string reg_str = LoadFileToString(reg_file_path);
+  
+  if(reg_str.empty()){
+    fprintf(stderr, "empty reg_str");
+    throw;
+  }
+  
+  m_json.Parse(reg_str.c_str());
+  if(m_json.HasParseError()){
+    fprintf(stderr, "JSON parse error: %s (at string positon %u)", rapidjson::GetParseError_En(m_json.GetParseError()), m_json.GetErrorOffset());
+    throw;
+  }
+}
+
 
 const std::string& FirmwarePortal::DeviceUrl(){
   return m_alpide_ip_addr;
@@ -555,9 +587,18 @@ uint64_t FirmwarePortal::GetAlpideRegister(const std::string& name){
 std::string FirmwarePortal::LoadFileToString(const std::string& path){
   std::ifstream ifs(path);
   if(!ifs.good()){
-    std::cerr<<"LoadFileToString:: ERROR, unable to load file<"<<path<<">\n";
-    throw;
+    std::string bin_path_str = binaryPath()+"/"+path;
+    std::ifstream ifs_bin(bin_path_str);
+    if(ifs_bin.good()){
+      ifs = std::move(ifs_bin);
+    }
+    else{
+      std::cerr<<"LoadFileToString:: ERROR, unable to load file<"<<path<<">\n";
+      std::cerr<<"LoadFileToString:: ERROR, unable to load file<"<<bin_path_str<<">\n";
+      throw;
+    }
   }
+
   std::string str;
   str.assign((std::istreambuf_iterator<char>(ifs) ),
              (std::istreambuf_iterator<char>()));

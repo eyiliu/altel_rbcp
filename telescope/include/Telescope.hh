@@ -45,14 +45,13 @@ public:
   std::chrono::system_clock::time_point m_tp_old;
   std::chrono::system_clock::time_point m_tp_run_begin;
 
-
   std::string m_st_string;
   std::mutex m_mtx_st;
-
 public:
   void fw_start();
   void fw_stop();
   void fw_init();
+
   void rd_start();
   void rd_stop();
 
@@ -65,7 +64,10 @@ public:
   
   std::string GetStatusString();
   uint64_t AsyncWatchDog();
-  
+
+  std::string m_name;
+  rapidjson::CrtAllocator m_jsa;
+  rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> m_js_conf;
 };
 
 class Telescope{
@@ -97,11 +99,11 @@ public:
   uint64_t AsyncWatchDog();  
 
   bool m_flag_next_event_add_conf{true};
-  rapidjson::CrtAllocator m_jsa_crt;
+
   rapidjson::CrtAllocator m_jsa;
-  rapidjson::MemoryPoolAllocator<> m_jsa_pool;
-  rapidjson::Value m_js_testbeam;
-  rapidjson::Value m_js_telescope;
+  rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> m_js_testbeam;
+  rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> m_js_telescope;
+  rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> m_js_status;
 };
 
 #endif
