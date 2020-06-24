@@ -12,11 +12,14 @@ void Layer::fw_start(){
     throw;
   }
   const auto& js_hotmask =  m_js_conf["hotmask"];
+  std::printf("\nMasking Layer %s ", m_name.c_str());
   for(const auto &hot: js_hotmask.GetArray()){
     uint64_t  x = hot[0].GetUint64();
     uint64_t  y = hot[1].GetUint64();
+    std::printf(" [%u, %u] ", x, y);
     m_fw->SetPixelRegister(x, y, "MASK_EN", true);
   }
+  std::printf("\n ");  
   
   if(!m_js_conf.HasMember("firmware")){
     fprintf(stderr, "JSON configure file error: no firmware section \n");
@@ -554,8 +557,8 @@ uint64_t Telescope::AsyncRead(){
     }
     
     js_writer.Reset(js_sb);
+    js_writer.StartObject();
     if(m_flag_next_event_add_conf){
-      js_writer.StartObject();
       js_writer.String("testbeam");
       m_js_testbeam.Accept(js_writer);
       js_writer.String("telescope");
