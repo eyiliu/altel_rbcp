@@ -1,7 +1,9 @@
 #include"ClusterPool.hh"
 
 #include <algorithm>
-  
+
+using namespace altel;
+
 void ClusterPool::buildClusters(){
   auto hit_col_remain= m_hits;
 

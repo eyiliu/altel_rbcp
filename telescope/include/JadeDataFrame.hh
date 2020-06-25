@@ -1,5 +1,5 @@
-#ifndef JADEPIX_JADEDATAFRAME_WS
-#define JADEPIX_JADEDATAFRAME_WS
+#ifndef _ALTEL_DATAFRAME_HH_
+#define _ALTEL_DATAFRAME_HH_
 
 #include <string>
 #include <vector>
@@ -10,37 +10,44 @@
 
 #include "ClusterPool.hh"
 
-class JadeDataFrame;
-using JadeDataFrameSP = std::shared_ptr<JadeDataFrame>;
+namespace altel{
+  class DataFrame;
+  using DataFrameSP = std::shared_ptr<DataFrame>;
 
-class JadeDataFrame {
-public:
-  JadeDataFrame(const std::string& raw);
-  JadeDataFrame(std::string&& raw);
-  JadeDataFrame(const rapidjson::Value &js);
-  JadeDataFrame(const rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> &js);
-
-  JadeDataFrame() = delete;  
+  class DataFrame {
+  public:
+    DataFrame(const std::string& raw);
+    DataFrame(std::string&& raw);
+    DataFrame(const rapidjson::Value &js);
+    DataFrame(const rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> &js);
+    DataFrame() = delete;
   
-  void Decode(uint32_t level);
-
-  //const version
-  const std::string& Raw() const;
-
-  //none const version
-  std::string& Raw();
+    inline void SetTrigger(uint64_t v){m_trigger = v;};
+    inline uint64_t GetTrigger(){return m_trigger;};
+    inline uint64_t GetCounter(){return m_counter;}
+    inline uint64_t GetExtension(){return m_extension;}
   
-  uint64_t GetTrigger(){return m_trigger;};
-  void SetTrigger(uint64_t v){m_trigger = v;};
+    void Print(std::ostream& os, size_t ws = 0) const;
+
+    template <typename Allocator>
+    rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> JSON(Allocator &a) const;
+
+    template <typename Allocator>
+    void fromJSON(const rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> &js);
   
-  uint32_t GetMatrixDepth() const;
-  uint32_t GetMatrixSizeX() const; //x row, y column
-  uint32_t GetMatrixSizeY() const;
-  uint64_t GetCounter();
-  uint64_t GetExtension();
+    void fromRaw(const std::string &raw, uint32_t level = 4);
+  
+    static const uint16_t s_version{4};
+    std::string m_raw;
+    uint16_t m_level_decode{0};
+    uint64_t m_counter{0};
+    uint64_t m_extension{0};
+    uint64_t m_trigger{0};
+    std::vector<ClusterHit> m_clusters;
+  };
 
   template <typename Allocator>
-  rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> JSON(Allocator &a) const{
+  rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> DataFrame::JSON(Allocator &a) const{
     rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> js;
     js.SetObject();
     js.AddMember("det", "alptel", a);
@@ -91,7 +98,7 @@ public:
   };
   
   template <typename Allocator>
-  void fromJSON(const rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> &js){
+  void DataFrame::fromJSON(const rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> &js){
     if(js["ver"].GetUint64()!=s_version){
       std::fprintf(stderr, "mismathed data writer/reader versions");
       throw;
@@ -117,16 +124,10 @@ public:
     }
     m_level_decode = 5;
   }
-  
-  void Print(std::ostream& os, size_t ws = 0) const;
-  
-  static const uint16_t s_version{3};
-  std::string m_data_raw;
-  uint16_t m_level_decode{0};
-  uint64_t m_counter{0};
-  uint64_t m_extension{0};
-  uint64_t m_trigger{0};
-  std::vector<ClusterHit> m_clusters;
-};
+
+}
+using JadeDataFrame = altel::DataFrame;
+using JadeDataFrameSP = std::shared_ptr<altel::DataFrame>;
 
 #endif
+

@@ -172,7 +172,6 @@ uint64_t Layer::AsyncPushBack(){ // IMPROVE IT AS A RING
       continue;
     }
 
-    df->Decode(3); //level 1, header-only
     uint16_t tg_l15 = 0x7fff & df->GetCounter();
     //std::cout<< "id "<< tg_l15 <<"  ";
     if(flag_wait_first_event){
@@ -483,7 +482,7 @@ void Telescope::Start(){
   m_is_running = true;
 }
 
-void Telescope::Start_no_tel_reading(){
+void Telescope::Start_no_tel_reading(){ // TO be removed, 
   for(auto & l: m_vec_layer){
     l->rd_start();
   }
@@ -495,7 +494,6 @@ void Telescope::Start_no_tel_reading(){
   }
   //m_fut_async_rd = std::async(std::launch::async, &Telescope::AsyncRead, this);  
   m_is_running = true;
-
 }
 
 void Telescope::Stop(){

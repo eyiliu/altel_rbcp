@@ -2,63 +2,44 @@
 #include "mysystem.hh"
 #include <iostream>
 
-JadeDataFrame::JadeDataFrame(std::string&& data)
-  : m_data_raw(std::move(data))
+using namespace altel;
+
+DataFrame::DataFrame(std::string&& raw)
+  : m_raw(std::move(raw))
 {
-  Decode(4);
+  fromRaw(m_raw);
 }
 
-JadeDataFrame::JadeDataFrame(const std::string& data)
-  : m_data_raw(data)
+DataFrame::DataFrame(const std::string& raw)
+  : m_raw(raw)
 {
-  Decode(4);
+  fromRaw(m_raw);
 }
 
-JadeDataFrame::JadeDataFrame(const rapidjson::Value &js){
+DataFrame::DataFrame(const rapidjson::Value &js){
   fromJSON<>(js);
 }
 
-
-JadeDataFrame::JadeDataFrame(const rapidjson::GenericValue<
-                             rapidjson::UTF8<>,
-                             rapidjson::CrtAllocator> &js){
+DataFrame::DataFrame(const rapidjson::GenericValue<
+                     rapidjson::UTF8<char>,
+                     rapidjson::CrtAllocator> &js){
   fromJSON<rapidjson::CrtAllocator>(js);
 }
 
-const std::string& JadeDataFrame::Raw() const
-{
-  return m_data_raw;
-}
-
-std::string& JadeDataFrame::Raw()
-{
-  return m_data_raw;
-}
-
-uint64_t JadeDataFrame::GetCounter()
-{
-  return m_counter;
-}
-
-uint64_t JadeDataFrame::GetExtension()
-{
-  return m_extension;
-}
-
-void JadeDataFrame::Decode(uint32_t level){
+void DataFrame::fromRaw(const std::string &raw, uint32_t level){
   if(level <= m_level_decode)
     return;
-  const uint8_t* p_raw_beg = reinterpret_cast<const uint8_t *>(m_data_raw.data());
-  const uint8_t* p_raw_end = p_raw_beg + m_data_raw.size();
+  const uint8_t* p_raw_beg = reinterpret_cast<const uint8_t *>(raw.data());
+  const uint8_t* p_raw_end = p_raw_beg + raw.size();
   const uint8_t* p_raw = p_raw_beg;
-  if(m_data_raw.size()<8){
+  if(raw.size()<8){
     std::cerr << "JadeDataFrame: raw data length is less than 8\n";
     throw;
   }
-  // std::cout << JadeUtils::ToHexString(m_data_raw)<<std::endl;
+  // std::cout << JadeUtils::ToHexString(raw)<<std::endl;
   if( *p_raw_beg!=0x5a || *(p_raw_end-1)!=0xa5){
     std::cerr << "JadeDataFrame: pkg header/trailer mismatch\n";
-    //std::cerr << JadeUtils::ToHexString(m_data_raw)<<std::endl;
+    //std::cerr << JadeUtils::ToHexString(raw)<<std::endl;
     std::cerr <<uint16_t((*p_raw_beg))<<std::endl;
     std::cerr <<uint16_t((*(p_raw_end-1)))<<std::endl;
     throw;
@@ -66,10 +47,10 @@ void JadeDataFrame::Decode(uint32_t level){
   p_raw++;
   m_extension=*p_raw;
   uint32_t len_payload_data = BE32TOH(*reinterpret_cast<const uint32_t*>(p_raw)) & 0x000fffff;
-  if (len_payload_data + 8 != m_data_raw.size()) {
+  if (len_payload_data + 8 != raw.size()) {
     std::cerr << "JadeDataFrame: raw data length does not match\n";
     std::cerr << len_payload_data<<std::endl;
-    std::cerr << m_data_raw.size()<<std::endl;
+    std::cerr << raw.size()<<std::endl;
     throw;
   }
   p_raw += 4;
@@ -212,7 +193,7 @@ void JadeDataFrame::Decode(uint32_t level){
   return;
 }
 
-void JadeDataFrame::Print(std::ostream& os, size_t ws) const
+void DataFrame::Print(std::ostream& os, size_t ws) const
 {  
   rapidjson::OStreamWrapper osw(os);
   rapidjson::Writer<rapidjson::OStreamWrapper> writer(osw);
