@@ -67,7 +67,7 @@ public:
       js_cluster_hit_res.SetArray();
       js_cluster_hit_res.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ch.resX()), a);
       js_cluster_hit_res.PushBack(rapidjson::GenericValue<rapidjson::UTF8<>, Allocator>(ch.resY()), a);
-      js_cluster_hit.AddMember("res", std::move(js_cluster_hit_pos), a);
+      js_cluster_hit.AddMember("res", std::move(js_cluster_hit_res), a);
       
       rapidjson::GenericValue<rapidjson::UTF8<>, Allocator> js_pixel_hits;
       js_pixel_hits.SetArray();

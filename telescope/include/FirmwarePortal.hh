@@ -105,8 +105,8 @@ public:
   }
 
   rapidjson::CrtAllocator m_jsa;
-  rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> m_js_conf;
-  rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> m_js_reg_cmd;  
+  rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> m_js_conf;
+  rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> m_js_reg_cmd;  
   rapidjson::Document m_json;
 };
 

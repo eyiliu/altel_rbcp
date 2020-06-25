@@ -103,7 +103,10 @@ public:
   rapidjson::CrtAllocator m_jsa;
   rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> m_js_testbeam;
   rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> m_js_telescope;
-  rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> m_js_status;
+  
+  rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator>  m_js_status;
+  std::atomic_uint64_t m_count_st_js_write{0};
+  std::atomic_uint64_t m_count_st_js_read{0};
 };
 
 #endif

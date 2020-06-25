@@ -261,8 +261,8 @@ uint64_t Layer::AsyncWatchDog(){
     double st_hz_input_period = st_n_ev_input_period / sec_period ;
 
     std::string st_string_new =
-      FirmwarePortal::FormatString("L<%u>: event(%d)/trigger(%d - %d)=Ev/Tr(%.4f) dEv/dTr(%.4f) tr_accu(%.2f hz) ev_accu(%.2f hz) tr_period(%.2f hz) ev_period(%.2f hz)\n",
-                                   m_extension, st_n_ev_input_now, st_n_tg_ev_now, st_n_tg_ev_begin-1, st_input_vs_trigger_accu, st_input_vs_trigger_period,
+      FirmwarePortal::FormatString("L<%u> event(%d)/trigger(%d - %d)=Ev/Tr(%.4f) dEv/dTr(%.4f) tr_accu(%.2f hz) ev_accu(%.2f hz) tr_period(%.2f hz) ev_period(%.2f hz)",
+                                   m_extension, st_n_ev_input_now, st_n_tg_ev_now, st_n_tg_ev_begin, st_input_vs_trigger_accu, st_input_vs_trigger_period,
                                    st_hz_tg_accu, st_hz_input_accu, st_hz_tg_period, st_hz_input_period
                                    );
     
@@ -370,8 +370,6 @@ Telescope::Telescope(const std::string& file_context){
     bool layer_found = false;
     for (const auto& js_layer : js_layers.GetArray()){
       if(js_layer.HasMember("name") && js_layer["name"]==layer_name){
-        // std::unique_ptr<FirmwarePortal> fw(new FirmwarePortal(FirmwarePortal::Stringify(js_layer["ctrl_link"])));
-        // std::unique_ptr<AltelReader> rd(new AltelReader(FirmwarePortal::Stringify(js_layer["data_link"])));
         std::unique_ptr<Layer> l(new Layer);
         l->m_fw.reset(new FirmwarePortal(FirmwarePortal::Stringify(js_layer["ctrl_link"])));
         l->m_rd.reset(new AltelReader(FirmwarePortal::Stringify(js_layer["data_link"])));
@@ -559,14 +557,22 @@ uint64_t Telescope::AsyncRead(){
     js_writer.Reset(js_sb);
     js_writer.StartObject();
     if(m_flag_next_event_add_conf){
+      rapidjson::PutN(js_sb, '\n', 1);
       js_writer.String("testbeam");
       m_js_testbeam.Accept(js_writer);
       js_writer.String("telescope");
       m_js_telescope.Accept(js_writer);
       m_flag_next_event_add_conf = false;
     }
-    js_writer.String("layers");
+    if(m_count_st_js_write > m_count_st_js_read){
+      rapidjson::PutN(js_sb, '\n', 1);
+      js_writer.String("status");
+      m_js_status.Accept(js_writer);
+      m_count_st_js_read ++;
+    }
+    
     rapidjson::PutN(js_sb, '\n', 1);
+    js_writer.String("layers");
     js_writer.StartArray();
     for(auto& e: ev){
       auto js_e = e->JSON(m_jsa);
@@ -590,15 +596,33 @@ uint64_t Telescope::AsyncRead(){
 uint64_t Telescope::AsyncWatchDog(){
   m_is_async_watching = true;
   while(m_is_async_watching){
+    rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> js_status(rapidjson::kObjectType);
     std::this_thread::sleep_for(1s);
     for(auto &l: m_vec_layer){
-      std::cout<< l->GetStatusString();
+      std::string l_status = l->GetStatusString();
+      std::fprintf(stdout, "%s\n", l_status.c_str());
+      
+      rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> name;
+      rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> value;
+      name.SetString(l->m_name, m_jsa);
+      value.SetString(l_status, m_jsa);
+      js_status.AddMember(std::move(name), std::move(value), m_jsa);      
     }
     uint64_t st_n_ev = m_st_n_ev;
-    //TODO: make a json object to keep status;
-    
     std::fprintf(stdout, "Tele: disk saved events(%u) \n\n", st_n_ev);
     m_flag_next_event_add_conf = true;
+
+    //TODO: make a json object to keep status;
+    if(m_count_st_js_read == m_count_st_js_write){
+      std::stringstream ss;
+      std::time_t t = std::time(nullptr);
+      ss<<std::put_time(std::localtime(&t), "%Y-%m-%d %H:%M:%S");
+      std::string now_str = ss.str();
+      js_status.AddMember("time", std::move(now_str), m_jsa);
+      m_js_status = std::move(js_status);
+      m_count_st_js_write ++;
+      
+    }
   }
   //sleep and watch running time status;
   return 0;
