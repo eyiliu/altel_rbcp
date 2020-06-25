@@ -29,8 +29,8 @@ AltelReader::AltelReader(const std::string& json_str)
   rapidjson::GenericDocument<rapidjson::UTF8<char>, rapidjson::CrtAllocator>  js_doc;
   js_doc.Parse(json_str);
   if(js_doc.HasParseError()){
-    fprintf(stderr, "JSON parse error: %s (at string positon %u)",
-            rapidjson::GetParseError_En(js_doc.GetParseError()), js_doc.GetErrorOffset());
+    std::fprintf(stderr, "ERROR<%s>: JSON parse error: %s (at string positon %u)\n",  __func__,
+                 rapidjson::GetParseError_En(js_doc.GetParseError()), js_doc.GetErrorOffset());
     throw;
   }
 
@@ -49,7 +49,7 @@ AltelReader::AltelReader(const std::string& json_str)
     m_flag_file = true;
   }
   else{
-    fprintf(stderr, "Unknown reader protocol: %s", js_proto.GetString());
+    std::fprintf(stderr, "ERROR<%s>: Unknown reader protocol: %s\n",   __func__,  js_proto.GetString());
     throw;
   }  
 }
@@ -71,7 +71,7 @@ AltelReader::AltelReader(const rapidjson::GenericValue<rapidjson::UTF8<>, rapidj
     m_flag_file = true;
   }
   else{
-    fprintf(stderr, "Unknown reader protocol: %s", js_proto.GetString());
+    std::fprintf(stderr, "ERROR<%s>: Unknown reader protocol: %s\n", __func__, js_proto.GetString());
     throw;
   }  
 
@@ -98,9 +98,12 @@ void AltelReader::Open(){
     tcpaddr.sin_addr.s_addr = inet_addr(m_tcp_ip.c_str());
     if(connect(m_fd, (struct sockaddr *)&tcpaddr, sizeof(tcpaddr)) < 0){
       //when connect fails, go to follow lines
-      if(errno != EINPROGRESS) fprintf(stderr,"TCP connection\n");
-      if(errno == 29)
-        fprintf(stderr,"reader open timeout\n");
+      if(errno != EINPROGRESS){
+        std::fprintf(stderr, "ERROR<%s>: unable to start TCP connection, error code %i \n", __func__, errno);
+      }
+      if(errno == 29){
+        std::fprintf(stderr, "ERROR<%s>: TCP open timeout \n", __func__);
+      }
       fd_set fds;
       FD_ZERO(&fds);
       FD_SET(m_fd, &fds);
@@ -108,8 +111,9 @@ void AltelReader::Open(){
       tv_timeout.tv_sec = 0;
       tv_timeout.tv_usec = 10000;
       int rc = select(m_fd+1, &fds, NULL, NULL, &tv_timeout);
-      if(rc<=0)
-        fprintf(stderr,"connect-select error\n");
+      if(rc<=0){
+        std::fprintf(stderr,"ERROR<%s>: socket select returns error code %i\n", __func__, rc);
+      }
     }
   }
 }
@@ -172,10 +176,9 @@ JadeDataFrameSP AltelReader::Read(const std::chrono::milliseconds &timeout_idel)
       read_len_real = read(m_fd, &buf[size_filled], size_buf-size_filled);
 #endif
       if(read_len_real < 0){
-        std::cerr<<"JadeRead: reading error\n";
+        std::fprintf(stderr, "ERROR<%s>: read(...) returns error code %i\n", __func__, read_len_real);
         throw;
       }
-      // std::cout<<"recv len "<<read_len_real<<std::endl;
 
       if(read_len_real== 0){
         if(!can_time_out){
@@ -189,11 +192,12 @@ JadeDataFrameSP AltelReader::Read(const std::chrono::milliseconds &timeout_idel)
               if(m_file_terminate_eof)
                 return nullptr;
               else{
-                std::fprintf(stderr, " data reader: no data at all. (%s)\n", m_tcp_ip.c_str());
+                std::fprintf(stderr, "ERROR<%s>: no data at all. (%s)\n",  __func__, m_tcp_ip.c_str());
               }
               return nullptr;
             }
             //TODO: keep remain data, nothrow
+            std::fprintf(stderr, "ERROR<%s>: error of incomplete data reading \n", __func__);
             throw;
           }
         }
@@ -218,10 +222,10 @@ JadeDataFrameSP AltelReader::Read(const std::chrono::milliseconds &timeout_idel)
           if(std::chrono::system_clock::now() > tp_timeout_idel){
             //std::cerr<<"JadeRead: reading timeout\n";
             if(size_filled == 0){
-              std::fprintf(stderr, " data reader: no data at all. (%s)\n", m_tcp_ip.c_str());
+              std::fprintf(stderr, "ERROR<%s>: no data at all. (%s)\n", __func__ ,m_tcp_ip.c_str());
               return nullptr;
             }
-            std::cerr<<"JadeRead: remaining data\n";
+            std::fprintf(stderr, "ERROR<%s>: error of incomplete data reading \n", __func__);
             std::cerr<<"replace here!! hextring\n";
             // std::cerr<<JadeUtils::ToHexString(buf.data(), size_filled)<<"\n";
             //TODO: keep remain data, nothrow, ? try a again?
@@ -232,8 +236,8 @@ JadeDataFrameSP AltelReader::Read(const std::chrono::milliseconds &timeout_idel)
       }
       read_len_real = recv(m_fd, &buf[size_filled], (unsigned int)(size_buf-size_filled), MSG_WAITALL);
       if( read_len_real == 0) continue;
-      if(read_len_real <= 0){
-        std::cerr<<"JadeRead: reading error\n";
+      if(read_len_real < 0){
+        std::fprintf(stderr, "ERROR<%s>: read(...) returns error code %i\n", __func__, read_len_real);
         throw;
       }
       // std::cout<<"recv len "<<read_len_real<<std::endl;
@@ -249,7 +253,7 @@ JadeDataFrameSP AltelReader::Read(const std::chrono::milliseconds &timeout_idel)
       uint32_t size_payload = (w1 & 0xfffff);
       // std::cout<<" size_payload "<< size_payload<<std::endl;      
       if(header_byte != HEADER_BYTE){
-        std::cerr<<"wrong header\n";
+        std::fprintf(stderr, "ERROR<%s>: wrong header of data frame\n", __func__);
         //TODO: skip brocken data
         throw;
       }
@@ -259,9 +263,8 @@ JadeDataFrameSP AltelReader::Read(const std::chrono::milliseconds &timeout_idel)
   }
   uint8_t footer_byte =  buf.back();
   if(footer_byte != FOOTER_BYTE){
-    std::cerr<<"wrong footer\n";
-    std::cerr<<"\n";
-    std::cerr<<"replace here!! hextring\n";
+    std::fprintf(stderr, "ERROR<%s>: wrong footer of data frame\n", __func__);
+    std::cerr<<"\nreplace here!! hextring\n";
     // std::cout<<JadeUtils::ToHexString(buf)<<std::endl;
     std::cerr<<"\n";
     //TODO: skip brocken data
@@ -275,7 +278,7 @@ JadeDataFrameSP AltelReader::Read(const std::chrono::milliseconds &timeout_idel)
 std::string AltelReader::LoadFileToString(const std::string& path){
   std::ifstream ifs(path);
   if(!ifs.good()){
-    std::cerr<<"LoadFileToString:: ERROR, unable to load file<"<<path<<">\n";
+    std::fprintf(stderr, "ERROR<%s>: unable to load file<%s>\n", __func__, path.c_str());
     throw;
   }
   std::string str;
