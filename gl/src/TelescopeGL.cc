@@ -65,11 +65,11 @@ TelescopeGL::TelescopeGL(){
   //                     0.25f * time * glm::radians(180.0f),
   //                     glm::vec3(0.0f, 0.0f, 1.0f));
     
-  m_view = glm::lookAt(glm::vec3(-300.0f, 0.0f, 90.0f),
-                       glm::vec3(0.0f, 0.0f, 90.0f),
-                       glm::vec3(0.0f, 1.0f, 0.0f));
+  m_view = glm::lookAt(glm::vec3(500.0f, 0.0f, 250.0f), // eye
+                       glm::vec3(0.0f, 0.0f, 250.0f),   // center
+                       glm::vec3(0.0f, 1.0f, 0.0f));   // up vector
     
-  m_proj = glm::perspective(glm::radians(15.0f), win_width/win_high, 1.0f, 500.0f);
+  m_proj = glm::perspective(glm::radians(22.0f), win_width/win_high, 1.0f, 500.0f);
   
   initializeGL();
 }

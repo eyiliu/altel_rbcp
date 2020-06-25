@@ -51,6 +51,7 @@ public:
   void fw_start();
   void fw_stop();
   void fw_init();
+  void fw_conf();
 
   void rd_start();
   void rd_stop();

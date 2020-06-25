@@ -5,7 +5,24 @@
 using namespace std::chrono_literals;
 
 void Layer::fw_start(){
+  if(!m_fw) return;  
+  m_fw->SetAlpideRegister("CMU_DMU_CONF", 0x70);// token
+  m_fw->SetAlpideRegister("CHIP_MODE", 0x3d); //trigger MODE
+  m_fw->SendAlpideBroadcast("RORST"); //Readout (RRU/TRU/DMU) reset, commit token
+  m_fw->SetFirmwareRegister("FIRMWARE_MODE", 1); //run ext trigger
+  std::fprintf(stdout, " fw start %s\n", m_fw->DeviceUrl().c_str());
+}
+
+void Layer::fw_stop(){
   if(!m_fw) return;
+  m_fw->SetFirmwareRegister("FIRMWARE_MODE", 0); //fw must be stopped before chip
+  m_fw->SetAlpideRegister("CHIP_MODE", 0x3c); // configure mode
+  std::fprintf(stdout, " fw stop  %s\n", m_fw->DeviceUrl().c_str());
+}
+
+void Layer::fw_conf(){
+  if(!m_fw) return;
+  std::fprintf(stdout, " fw conf %s\n", m_fw->DeviceUrl().c_str());
 
   if(!m_js_conf.HasMember("hotmask")){
     fprintf(stderr, "JSON configure file error: no hotmask section \n");
@@ -38,21 +55,8 @@ void Layer::fw_start(){
   for(const auto &reg: js_sn_conf.GetObject()){
     m_fw->SetAlpideRegister(reg.name.GetString(), reg.value.GetUint64());
   }
-  
-  m_fw->SetAlpideRegister("CMU_DMU_CONF", 0x70);// token
-  m_fw->SetAlpideRegister("CHIP_MODE", 0x3d); //trigger MODE
-  m_fw->SendAlpideBroadcast("RORST"); //Readout (RRU/TRU/DMU) reset, commit token
-  m_fw->SetFirmwareRegister("FIRMWARE_MODE", 1); //run ext trigger
-  std::fprintf(stdout, " fw start %s\n", m_fw->DeviceUrl().c_str());
-}
 
-void Layer::fw_stop(){
-  if(!m_fw) return;
-  m_fw->SetFirmwareRegister("FIRMWARE_MODE", 0); //fw must be stopped before chip
-  m_fw->SetAlpideRegister("CHIP_MODE", 0x3c); // configure mode
-  std::fprintf(stdout, " fw stop  %s\n", m_fw->DeviceUrl().c_str());
 }
-
 
 void Layer::fw_init(){
   if(!m_fw) return;
@@ -321,7 +325,7 @@ Telescope::Telescope(const std::string& file_context){
   js_doc.Parse(file_context);
 
   if(js_doc.HasParseError()){
-    fprintf(stderr, "JSON parse error: %s (at string positon %u) \n", rapidjson::GetParseError_En(js_doc.GetParseError()), js_doc.GetErrorOffset());
+    fprintf(stderr, "JSON parse error: %s (at string position %u) \n", rapidjson::GetParseError_En(js_doc.GetParseError()), js_doc.GetErrorOffset());
     throw;
   }
   const auto &js_obj = js_doc.GetObject();
@@ -465,6 +469,10 @@ void Telescope::Init(){
 }
 
 void Telescope::Start(){
+  for(auto & l: m_vec_layer){
+    l->fw_conf();
+  }
+
   for(auto & l: m_vec_layer){
     l->rd_start();
   }

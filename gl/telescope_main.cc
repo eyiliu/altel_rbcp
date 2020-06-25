@@ -40,7 +40,9 @@ void fw_threshold(FirmwarePortal *m_fw, uint32_t thrshold){
 }
 
 
-uint64_t async_gl_loop(Telescope *ptel, bool *pflag_gl_running);
+uint64_t async_gl_loop(Telescope *ptel,
+                       const rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> *pjs,
+                       bool *pflag_gl_running);
 
 
 static sig_atomic_t g_done = 0;
@@ -99,6 +101,12 @@ Usage:\n\
   std::string file_context = FirmwarePortal::LoadFileToString(json_file_path);
   
   Telescope tel(file_context);
+
+
+  rapidjson::GenericDocument<rapidjson::UTF8<char>, rapidjson::CrtAllocator>  js_doc;
+  js_doc.Parse(file_context);
+ 
+
   
   const char* linenoise_history_path = "/tmp/.alpide_cmd_history";
   linenoiseHistoryLoad(linenoise_history_path);
@@ -140,7 +148,7 @@ Usage:\n\
       printf("starting \n");
       tel.Start();
       if(!flag_gl_running){
-        fut_gl_loop = std::async(std::launch::async, &async_gl_loop, &tel, &flag_gl_running);
+        fut_gl_loop = std::async(std::launch::async, &async_gl_loop, &tel, &js_doc["telescope"], &flag_gl_running);
       }
     }
     else if (std::regex_match(result, std::regex("\\s*(stop)\\s*"))){
@@ -336,25 +344,44 @@ Usage:\n\
     linenoiseHistoryAdd(result);
     free(result);
   }
-
   linenoiseHistorySave(linenoise_history_path);
   linenoiseHistoryFree();
 }
 
-
-uint64_t async_gl_loop(Telescope *ptel, bool *pflag_gl_running){
+uint64_t async_gl_loop(Telescope *ptel,
+                       const rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> *pjs,
+                       bool *pflag_gl_running){
+  const rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::CrtAllocator> &js_telescope = *pjs;
   Telescope &tel = *ptel;
   bool &flag_gl_running = *pflag_gl_running;
   flag_gl_running = true;
+
+  if(!js_telescope.HasMember("locations")){
+    fprintf(stderr, "JSON configure file error: no \"location\" section \n");
+    throw;
+  }
+  
+  std::multimap<double, std::string> loc_layer;
+  for(const auto& l: js_telescope["locations"].GetObject()){
+    std::string name = l.name.GetString();
+    double loc = l.value.GetDouble();
+    loc_layer.insert(std::pair<double, std::string>(loc, name));
+  }
   
   TelescopeGL telgl;
-  telgl.addTelLayer(0, 0, 0,   1, 0, 0,      0.028, 0.026, 1.0, 1024, 512);
-  telgl.addTelLayer(0, 0, 30,  0, 1, 0,      0.028, 0.026, 1.0, 1024, 512);
-  telgl.addTelLayer(0, 0, 60,  0, 0, 1,      0.028, 0.026, 1.0, 1024, 512);
-  telgl.addTelLayer(0, 0, 120, 0.5, 0.5, 0,  0.028, 0.026, 1.0, 1024, 512);
-  telgl.addTelLayer(0, 0, 150, 0, 1, 1,      0.028, 0.026, 1.0, 1024, 512);
-  telgl.addTelLayer(0, 0, 180, 1, 0, 1,      0.028, 0.026, 1.0, 1024, 512);
-  telgl.addTelLayer(0, 0, 240, 0.5, 0, 0.5,  0.028, 0.026, 1.0, 1024, 512);
+  for(const auto& l: loc_layer){
+    float loc = l.first;    
+    telgl.addTelLayer(0, 0, loc,   1, 0, 0,     0.028, 0.026, 1.0, 1024, 512);
+  }
+  
+  // TelescopeGL telgl;
+  // telgl.addTelLayer(0, 0, 0,   1, 0, 0,      0.028, 0.026, 1.0, 1024, 512);
+  // telgl.addTelLayer(0, 0, 30,  0, 1, 0,      0.028, 0.026, 1.0, 1024, 512);
+  // telgl.addTelLayer(0, 0, 60,  0, 0, 1,      0.028, 0.026, 1.0, 1024, 512);
+  // telgl.addTelLayer(0, 0, 120, 0.5, 0.5, 0,  0.028, 0.026, 1.0, 1024, 512);
+  // telgl.addTelLayer(0, 0, 150, 0, 1, 1,      0.028, 0.026, 1.0, 1024, 512);
+  // telgl.addTelLayer(0, 0, 180, 1, 0, 1,      0.028, 0.026, 1.0, 1024, 512);
+  // telgl.addTelLayer(0, 0, 240, 0.5, 0, 0.5,  0.028, 0.026, 1.0, 1024, 512);
   telgl.buildProgramTel();
   telgl.buildProgramHit();
 
