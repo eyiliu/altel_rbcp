@@ -55,9 +55,6 @@ void TelescopeGL::addTelLayer(float    posx,     float posy,     float posz,
 
 TelescopeGL::TelescopeGL(){
   
-  GLfloat win_width = 1200;
-  GLfloat win_high  = 400;
-  
   m_model = glm::mat4(1.0f);
   // auto t_now = std::chrono::high_resolution_clock::now();
   // float time = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
@@ -68,12 +65,25 @@ TelescopeGL::TelescopeGL(){
   m_view = glm::lookAt(glm::vec3(500.0f, 0.0f, 250.0f), // eye
                        glm::vec3(0.0f, 0.0f, 250.0f),   // center
                        glm::vec3(0.0f, 1.0f, 0.0f));   // up vector
-    
-  m_proj = glm::perspective(glm::radians(22.0f), win_width/win_high, 1.0f, 500.0f);
+  
+  m_proj = glm::perspective(glm::radians(22.0f), m_win_width/m_win_high, 0.1f, 500.0f);
   
   initializeGL();
 }
 
+
+void TelescopeGL::lookAt(float cameraX, float cameraY, float cameraZ,
+                         float centerX, float centerY, float centerZ,
+                         float upvectX, float upvectY, float upvectZ){ // model cord 
+  
+  m_view = glm::lookAt(glm::vec3(cameraX, cameraY, cameraZ),    // eye position
+                       glm::vec3(centerX, centerY, centerZ),    // object center
+                       glm::vec3(upvectX, upvectY, upvectZ));   // up vector
+}
+
+void TelescopeGL::perspective(float fovHoriz, float nearDist, float farDist){ // viewer cord
+  m_proj = glm::perspective(glm::radians(fovHoriz), m_win_width/m_win_high, nearDist, farDist);
+}
 
 void TelescopeGL::initializeGL(){ 
   sf::ContextSettings settings;
@@ -82,9 +92,7 @@ void TelescopeGL::initializeGL(){
   settings.majorVersion = 4;
   settings.minorVersion = 5;
 
-  GLfloat win_width = 1200;
-  GLfloat win_high  = 400;
-  m_window = std::make_unique<sf::Window>(sf::VideoMode(win_width, win_high, 32),
+  m_window = std::make_unique<sf::Window>(sf::VideoMode(m_win_width, m_win_high, 32),
                                           "TelescopeGL", sf::Style::Titlebar | sf::Style::Close, settings);
   //glutInit(&argc, argv);
   //glutCreateWindow("GLEW Test");

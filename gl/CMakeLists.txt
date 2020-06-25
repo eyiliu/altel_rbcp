@@ -3,7 +3,7 @@ target_link_libraries(telgl
   PRIVATE GL GLEW glut
   PUBLIC sfml-window  sfml-system
   )
-set(LIB_PUBLIC_HEADERS include/TelescopeGL.hh)
+set(LIB_PUBLIC_HEADERS include/TelescopeGL.hh  include/TelescopeViewer.hh)
 set_target_properties(telgl PROPERTIES PUBLIC_HEADER "${LIB_PUBLIC_HEADERS}")
 target_include_directories(telgl
   PUBLIC

@@ -10,6 +10,8 @@
 
 #include "ClusterPool.hh"
 
+using namespace altel; // to be removed
+
 namespace altel{
   class DataFrame;
   using DataFrameSP = std::shared_ptr<DataFrame>;
@@ -125,6 +127,13 @@ namespace altel{
     m_level_decode = 5;
   }
 
+  class DataPack{
+  public:
+    uint64_t m_trigger{0};
+    std::vector<DataFrameSP> m_frames;
+  };
+
+  using DataPackSP = std::shared_ptr<DataPack>;
 }
 using JadeDataFrame = altel::DataFrame;
 using JadeDataFrameSP = std::shared_ptr<altel::DataFrame>;

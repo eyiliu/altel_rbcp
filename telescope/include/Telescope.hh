@@ -18,7 +18,7 @@ public:
   std::future<uint64_t> m_fut_async_rd;
   std::future<uint64_t> m_fut_async_watch;
   std::vector<JadeDataFrameSP> m_vec_ring_ev;
-  JadeDataFrameSP m_ring_end;
+  DataFrameSP m_ring_end;
   
   uint64_t m_size_ring{200000};
   std::atomic_uint64_t m_count_ring_write;
@@ -57,8 +57,8 @@ public:
   void rd_stop();
 
   uint64_t AsyncPushBack();
-  JadeDataFrameSP GetNextCachedEvent();
-  JadeDataFrameSP& Front();
+  DataFrameSP GetNextCachedEvent();
+  DataFrameSP& Front();
   void PopFront();
   uint64_t Size();
   void ClearBuffer();
@@ -80,17 +80,17 @@ public:
   bool m_is_async_watching{false};
   bool m_is_running{false};
 
-  std::vector<JadeDataFrameSP> m_ev_last;
-  std::vector<JadeDataFrameSP> m_ev_last_empty;
+  std::vector<DataFrameSP> m_ev_last;
+  std::vector<DataFrameSP> m_ev_last_empty;
   std::atomic_uint64_t m_mon_ev_read{0};
   std::atomic_uint64_t m_mon_ev_write{0};
-  std::vector<JadeDataFrameSP> ReadEvent_Lastcopy();
+  std::vector<DataFrameSP> ReadEvent_Lastcopy();
   
   std::atomic_uint64_t m_st_n_ev{0};
   
   ~Telescope();
   Telescope(const std::string& file_context);
-  std::vector<JadeDataFrameSP> ReadEvent();
+  std::vector<DataFrameSP> ReadEvent();
 
   void Init();
   void Start();

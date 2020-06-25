@@ -25,6 +25,9 @@ struct UniformLayer{
 
 class TelescopeGL{
 public:
+  GLfloat m_win_width{1200};
+  GLfloat m_win_high{400};
+
   glm::mat4 m_model;
   glm::mat4 m_view;
   glm::mat4 m_proj;
@@ -81,7 +84,12 @@ public:
   
   void initializeGL();
   void terminateGL();
-
+  void lookAt(float cameraX, float cameraY, float cameraZ,
+              float centerX, float centerY, float centerZ,
+              float upvectX, float upvectY, float upvectZ);
+  void perspective(float povHoriz, float nearDist, float farDist);
+  
+  
   void addTelLayer(float    posx,     float posy,     float posz, 
                    float    colorr,   float colorg,   float colorb, 
                    float    pitchx,   float pitchy,   float thickz,
@@ -94,6 +102,7 @@ public:
   void addHit(int32_t px, int32_t py, int32_t pz);
   void clearHit();
 
+  
   void buildProgramTrack();
   void drawTrack();
   void addTrack(float px, float py, float pz,
