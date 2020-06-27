@@ -384,6 +384,10 @@ uint64_t async_gl_loop(Telescope *ptel,
   // telgl.addTelLayer(0, 0, 240, 0.5, 0, 0.5,  0.028, 0.026, 1.0, 1024, 512);
   telgl.buildProgramTel();
   telgl.buildProgramHit();
+  telgl.clearFrame();
+  telgl.drawTel();
+  telgl.drawHit();
+  telgl.flushFrame();
 
   uint64_t n_gl_frame = 0;
   bool flag_pausing = false;
@@ -406,11 +410,12 @@ uint64_t async_gl_loop(Telescope *ptel,
       continue;
     }
     
-    telgl.clearHit();
     
     auto ev_col =tel.ReadEvent_Lastcopy();
     if(ev_col.empty())
       continue;
+    
+    telgl.clearHit();
     
     for(auto& e: ev_col){
       for(auto &chit : e->m_clusters){
