@@ -1,6 +1,6 @@
-// g++ -I../../common/rapidjson -I../../common efficency.cxx  `root-config --cflags --glibs`
+// g++ -I../../common/rapidjson -I../../common efficiency.cxx  `root-config --cflags --glibs`
 // ./a.out tests.json 1000
-// eog efficency_xxxx.png
+// eog efficiency_xxxx.png
 
 #include "mysystem.hh"
 #include "myrapidjson.h"
@@ -8,7 +8,10 @@
 #include <vector>
 #include <map>
 #include <iostream>
-
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 
 #include <TROOT.h>
 #include <TGraph.h>
@@ -35,6 +38,15 @@ static std::string FormatString( const std::string& format, Args ... args ){
   std::unique_ptr<char[]> buf( new char[ size ] ); 
   std::snprintf( buf.get(), size, format.c_str(), args ... );
   return std::string( buf.get(), buf.get() + size - 1 );
+}
+
+std::string GetNowStr(const std::string &format){
+  // "%Y%m%d%H%M%S"
+  auto now = std::chrono::system_clock::now();
+  auto now_c = std::chrono::system_clock::to_time_t(now);
+  std::stringstream ss;
+  ss<<std::put_time(std::localtime(&now_c), format.c_str());
+  return ss.str();
 }
 
 
@@ -131,9 +143,9 @@ int main(int argc, char **argv){
       }
       hit_n += l_hit_n;
     }
-    if( hit_n< index_layer.size()-1){
-      is_perfect_datapack = false;
-    }
+    // if( hit_n< index_layer.size()-1){
+    //   is_perfect_datapack = false;
+    // }
     
     if(!is_perfect_datapack){
       not_perfect_datapack_n ++;
@@ -181,8 +193,7 @@ int main(int argc, char **argv){
       else{
         th2->Fill(0, refX,refY);
       }
-    }
-    
+    }    
     
     if(processed_count>=wanted_count){
       std::fprintf(stdout, "this file has more than %lu datapack\n", wanted_count);
@@ -198,12 +209,18 @@ int main(int argc, char **argv){
   
   for(auto &eff_item: eff_col){
     auto &index = eff_item.first;
-    auto &th2 = eff_item.second.first;
-    uint64_t pad_y = index_map[index];    
+    auto &teff = eff_item.second.first;
+    uint64_t pad_y = index_map[index]; 
     cv.cd(1+ pad_y);
-    th2->Draw("COLZ");
-  }
+    
+    std::unique_ptr<TH2F> th2( dynamic_cast<TH2F*>(teff->CreateHistogram()) );    
+    th2->SetAxisRange(0.9, 1.,"Z");
+    th2->DrawCopy("COLZ");
+    double n_total = teff->GetTotalHistogram()->GetEntries();
+    double n_passed = teff->GetPassedHistogram()->GetEntries();
+    std::fprintf(stdout, "Layer %u  efficency: %.1f/%.1f = %.4f \n", index, n_passed, n_total,  n_passed/n_total);
 
+  }
   
   TImage *img = TImage::Create();
   img->FromPad(&cv);
@@ -213,11 +230,10 @@ int main(int argc, char **argv){
     str_index = str_index + "_" + std::to_string(i);
   }
   
-  std::string image_name = FormatString("effciency%s.png", str_index.c_str());
-  std::fprintf(stdout, "save canvas image into %s\n", image_name.c_str());  
+  std::string image_name = FormatString("efficiency%s_%s.png", str_index.c_str(), GetNowStr("%Y%m%d-%H%M%S").c_str());
+  std::fprintf(stdout, "save canvas image into %s\n", image_name.c_str()); 
   img->WriteImage(image_name.c_str());
   delete img;
-    
   
   return 0;
 }
