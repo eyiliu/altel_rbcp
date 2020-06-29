@@ -359,7 +359,7 @@ Telescope::Telescope(const std::string& file_context){
     fprintf(stderr, "JSON configure file error: no \"location\" section \n");
     throw;
   }
-
+  
   // throw;
   for(const auto& l: js_telescope["locations"].GetObject()){
     std::string name = l.name.GetString();
@@ -367,6 +367,12 @@ Telescope::Telescope(const std::string& file_context){
     layer_loc[name] = loc;
     loc_layer.insert(std::pair<double, std::string>(loc, name));
   }
+
+  if(!js_testbeam.HasMember("energy")){
+    fprintf(stderr, "JSON configure file error: no energy \n");
+    throw;
+  }
+  
   
   for(const auto& l: loc_layer){
     std::string layer_name = l.second;
@@ -389,6 +395,9 @@ Telescope::Telescope(const std::string& file_context){
     std::fprintf(stdout, "Layer %6s:     at location Z = %8.2f\n", layer_name.c_str(), l.first);
   }
 
+  double energy=js_testbeam["energy"].GetDouble();
+  std::fprintf(stdout, "Testbeam energy:  %.1f\n", energy);
+  
   if(!m_js_telescope.HasMember("config")){
       std::fprintf(stderr, "JSON configure file error: no telescope config \n");
       throw;
@@ -596,6 +605,7 @@ uint64_t Telescope::AsyncRead(){
   std::fwrite(reinterpret_cast<const char *>("]"), 1, 2, fd);
   fclose(fd);
   std::fprintf(stdout, "Tele: disk file closed\n");
+  std::fprintf(stdout,"- %s  %llu Events\n", data_path.c_str(), n_ev); 
   return n_ev;
 }
 

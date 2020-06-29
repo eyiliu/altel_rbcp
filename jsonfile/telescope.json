@@ -1,6 +1,6 @@
 {
     "testbeam":{
-        "energy":4
+        "energy":4.4
     },
     
     "telescope":{
@@ -8,10 +8,10 @@
             "red":    0,
             "orange": 38,
             "yellow": 76,
-            "green":  114,
-            "cyan":   152,
-            "blue":   190,
-            "purple": 490
+            "green":  226,
+            "cyan":   376,
+            "blue":   414,
+            "purple": 452
         },
         "config":{
             "red":{
@@ -63,13 +63,13 @@
                             [891,292]
                           ],
                             
-                "firmware":{"TRIG_DELAY":1},
-                "sensor":{"FROMU_CONF_2":20, "VCASN":57, "VCASN2":69, "ITHR":51 }
+                "firmware":{"TRIG_DELAY":0},
+                "sensor":{"FROMU_CONF_1":1792, "FROMU_CONF_2":13, "VCASN":61, "VCASN2":73, "ITHR":56 }
             },
             "orange":{
                 "hotmask":[],
-                "firmware":{"TRIG_DELAY":1},
-                "sensor":{"FROMU_CONF_2":20, "VCASN":57, "VCASN2":69, "ITHR":51}
+                "firmware":{"TRIG_DELAY":0},
+                "sensor":{"FROMU_CONF_1":1792, "FROMU_CONF_2":13, "VCASN":61, "VCASN2":73, "ITHR":56}
             },
             "yellow":{
                 "hotmask":[ [264,509],
@@ -90,8 +90,8 @@
                             [440,419]
                             
                           ],
-                "firmware":{"TRIG_DELAY":1},
-                "sensor":{"FROMU_CONF_2":20, "VCASN":57, "VCASN2":69, "ITHR":51}
+                "firmware":{"TRIG_DELAY":0},
+                "sensor":{"FROMU_CONF_1":1792, "FROMU_CONF_2":13, "VCASN":61, "VCASN2":73, "ITHR":56}
             },
             "green":{
                 "hotmask":[ [709,428],
@@ -152,8 +152,8 @@
                             [869,50]
 
                           ],
-                "firmware":{"TRIG_DELAY":1},
-                "sensor":{"FROMU_CONF_2":20, "VCASN":57, "VCASN2":69, "ITHR":51}
+                "firmware":{"TRIG_DELAY":0},
+                "sensor":{"FROMU_CONF_1":1792, "FROMU_CONF_2":13, "VCASN":61, "VCASN2":73, "ITHR":56}
             },
             "cyan":{
                 "hotmask":[ [764,248],
@@ -222,8 +222,8 @@
                             [537,384]
                             
                           ],
-                "firmware":{"TRIG_DELAY":1},
-                "sensor":{"FROMU_CONF_2":20, "VCASN":57, "VCASN2":69, "ITHR":51}
+                "firmware":{"TRIG_DELAY":0},
+                "sensor":{"FROMU_CONF_1":1792, "FROMU_CONF_2":13, "VCASN":61, "VCASN2":73, "ITHR":56}
             },
             "blue":{
                 "hotmask":[ [258,326],
@@ -253,8 +253,8 @@
                             [120,19]
                             
                           ],
-                "firmware":{"TRIG_DELAY":1},
-                "sensor":{"FROMU_CONF_2":20, "VCASN":57, "VCASN2":69, "ITHR":51}
+                "firmware":{"TRIG_DELAY":0},
+                "sensor":{"FROMU_CONF_1":1792, "FROMU_CONF_2":13, "VCASN":61, "VCASN2":73, "ITHR":56}
             },
             "purple":{
                 "hotmask":[ [537,484],
@@ -336,8 +336,8 @@
                             [431,417],
                             [173,436]
                           ],
-                "firmware":{"TRIG_DELAY":1},
-                "sensor":{"FROMU_CONF_2":20, "VCASN":57, "VCASN2":69, "ITHR":51}
+                "firmware":{"TRIG_DELAY":0},
+                "sensor":{"FROMU_CONF_1":1792, "FROMU_CONF_2":13, "VCASN":61, "VCASN2":73, "ITHR":56}
             }
         }
     },

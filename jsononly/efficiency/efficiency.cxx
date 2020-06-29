@@ -86,6 +86,35 @@ int main(int argc, char **argv){
     throw;
   }
   
+
+  auto& jsa = doc.GetAllocator();
+  rapidjson::Value js_telescope;
+  rapidjson::Value js_testbeam;
+  
+  for(auto ev_it = doc.Begin();
+      ev_it != doc.End(); ev_it++){
+    
+    const auto &evpack = *ev_it;
+    if(js_testbeam.IsNull()){
+      if(evpack.HasMember("testbeam")){
+        js_testbeam.CopyFrom(evpack["testbeam"], jsa);
+      }
+    }
+    
+    if(js_telescope.IsNull()){
+      if(evpack.HasMember("telescope")){
+        js_telescope.CopyFrom(evpack["telescope"], jsa);
+      }
+    }
+    if(!js_telescope.IsNull() && !js_testbeam.IsNull()){        
+      break;
+    }
+  }
+  if(js_telescope.IsNull() || js_testbeam.IsNull()){
+    std::fprintf(stderr, "unable to get config from data \n");
+    throw;
+  }
+  double energy = js_testbeam["energy"].GetDouble();
   
   std::set<uint64_t> index_layer{0, 1, 2, 3, 4, 5, 6}; // put the layer number 
   uint64_t max_index  = *max_element(index_layer.begin(), index_layer.end());  
@@ -218,7 +247,7 @@ int main(int argc, char **argv){
     th2->DrawCopy("COLZ");
     double n_total = teff->GetTotalHistogram()->GetEntries();
     double n_passed = teff->GetPassedHistogram()->GetEntries();
-    std::fprintf(stdout, "Layer %u  efficency: %.1f/%.1f = %.4f \n", index, n_passed, n_total,  n_passed/n_total);
+    std::fprintf(stdout, "Layer %u  efficiency: %.1f/%.1f = %.4f \n", index, n_passed, n_total,  n_passed/n_total);
 
   }
   

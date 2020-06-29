@@ -194,6 +194,7 @@ int main(int argc, char **argv){
   std::fprintf(stdout, "save canvas image into %s\n", image_name.c_str());  
   img->WriteImage(image_name.c_str());
   delete img;
+    
   
   return 0;
 }
